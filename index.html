@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6383067287370577"
-     crossorigin="anonymous"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Encaja</title>
@@ -159,6 +157,13 @@ label.lbl{font-size:13px;font-weight:600;color:var(--muted)}
 @media (max-width:860px){.cv-area{grid-template-columns:1fr}}
 .paper-wrap{background:var(--soft);border-radius:var(--r);padding:20px;overflow-x:auto}
 .paper{background:#fff;color:#1e2530;max-width:720px;margin:0 auto;padding:44px 48px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 8px 30px rgba(15,30,51,.12);font-family:Calibri,"Segoe UI",Arial,sans-serif;font-size:13.5px;line-height:1.45;border-radius:3px}
+.paper .p-head{display:flex;gap:20px;align-items:center}
+.paper .p-photo{width:88px;height:117px;object-fit:cover;border-radius:4px;flex:none}
+.photo-row{display:flex;gap:12px;align-items:center}
+.ph-thumb{width:48px;height:64px;border-radius:6px;object-fit:cover;background:var(--soft);flex:none}
+.ph-empty{display:grid;place-items:center;font-size:10px;color:var(--muted);text-align:center}
+.ph-btns{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+label.linkbtn{cursor:pointer}
 .paper .p-name{font-size:28px;font-weight:700;color:#121821;line-height:1.1}
 .paper .p-title{color:var(--cvc);font-weight:600;font-size:15px;margin-top:3px}
 .paper .p-contact{color:#5c6673;font-size:12.5px;margin-top:6px}
@@ -371,6 +376,7 @@ const state = {
   isExample: true,
   color: CV_COLORS[0].hex,
   lastPayload: null,
+  photo: null, // dataURL jpeg 3:4
   busy: false
 };
 let cfg = null, sb = null, session = null;
@@ -431,15 +437,87 @@ async function pdfToContent(file){
     }
     text = "";
   }
-  return {text, images, meta: `${pdf.numPages} pág.`};
+  let photo = null;
+  if (text){ try { photo = await photoFromPdfPage(await pdf.getPage(1)); } catch(e){ photo = null; } }
+  return {text, images, meta: `${pdf.numPages} pág.`, photo};
 }
+/* ---------- photo ---------- */
+function loadImg(src){ return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+function looksLikePhoto(w, h){ const r = w / h; return w >= 50 && h >= 50 && r > 0.55 && r < 1.35; }
+// Crop to a 3:4 portrait (keeping the upper part, where the face usually is) and export as JPEG.
+function cropToPhoto(src){
+  const w = src.naturalWidth || src.width, h = src.naturalHeight || src.height;
+  const target = 3 / 4;
+  let sw = w, sh = h, sx = 0, sy = 0;
+  if (w / h > target){ sw = h * target; sx = (w - sw) / 2; }
+  else { sh = w / target; sy = Math.max(0, (h - sh) * 0.3); }
+  const outW = Math.max(1, Math.min(600, Math.round(sw))), outH = Math.round(outW / target);
+  const c = document.createElement("canvas"); c.width = outW; c.height = outH;
+  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, outW, outH);
+  ctx.drawImage(src, sx, sy, sw, sh, 0, 0, outW, outH);
+  return c.toDataURL("image/jpeg", 0.9);
+}
+function pdfObjToCanvas(obj){
+  if (!obj) return null;
+  const c = document.createElement("canvas");
+  if (obj.bitmap){
+    c.width = obj.bitmap.width; c.height = obj.bitmap.height;
+    c.getContext("2d").drawImage(obj.bitmap, 0, 0); return c;
+  }
+  if (obj.data && obj.width && obj.height){
+    c.width = obj.width; c.height = obj.height;
+    const ctx = c.getContext("2d"), id = ctx.createImageData(obj.width, obj.height);
+    const n = obj.width * obj.height, src = obj.data, dst = id.data;
+    if (src.length === n * 4) dst.set(src);
+    else if (src.length === n * 3){ for (let i = 0, j = 0; i < n; i++){ dst[j++] = src[i*3]; dst[j++] = src[i*3+1]; dst[j++] = src[i*3+2]; dst[j++] = 255; } }
+    else return null;
+    ctx.putImageData(id, 0, 0); return c;
+  }
+  return null;
+}
+// Find a portrait-sized picture on the first page of a PDF CV.
+async function photoFromPdfPage(page){
+  const O = pdfjsLib.OPS, ops = await page.getOperatorList(), pageW = page.getViewport({scale: 1}).width;
+  const mul = (m, n) => [m[0]*n[0]+m[2]*n[1], m[1]*n[0]+m[3]*n[1], m[0]*n[2]+m[2]*n[3], m[1]*n[2]+m[3]*n[3], m[0]*n[4]+m[2]*n[5]+m[4], m[1]*n[4]+m[3]*n[5]+m[5]];
+  let ctm = [1,0,0,1,0,0]; const stack = []; const cands = [];
+  for (let i = 0; i < ops.fnArray.length; i++){
+    const fn = ops.fnArray[i], args = ops.argsArray[i];
+    if (fn === O.save) stack.push(ctm.slice());
+    else if (fn === O.restore) ctm = stack.pop() || [1,0,0,1,0,0];
+    else if (fn === O.transform) ctm = mul(ctm, args);
+    else if (fn === O.paintImageXObject){
+      const w = Math.hypot(ctm[0], ctm[1]), h = Math.hypot(ctm[2], ctm[3]);
+      if (w < pageW * 0.45 && w > 30 && looksLikePhoto(w, h)) cands.push({name: args[0], area: w * h});
+    }
+  }
+  cands.sort((a, b) => b.area - a.area);
+  for (const cd of cands.slice(0, 3)){
+    const store = String(cd.name).startsWith("g_") ? page.commonObjs : page.objs;
+    const obj = await new Promise(res => { const t = setTimeout(() => res(null), 2500); try { store.get(cd.name, o => { clearTimeout(t); res(o); }); } catch(e){ clearTimeout(t); res(null); } });
+    const c = pdfObjToCanvas(obj);
+    if (c && looksLikePhoto(c.width, c.height)) return cropToPhoto(c);
+  }
+  return null;
+}
+async function photoFromDocx(buf){
+  const srcs = [];
+  await mammoth.convertToHtml({arrayBuffer: buf}, {convertImage: mammoth.images.imgElement(img =>
+    img.read("base64").then(b => { srcs.push(`data:${img.contentType};base64,${b}`); return {src: ""}; }))});
+  for (const src of srcs.slice(0, 6)){
+    try { const i = await loadImg(src); if (looksLikePhoto(i.naturalWidth, i.naturalHeight)) return cropToPhoto(i); } catch(e){}
+  }
+  return null;
+}
+
 async function readFile(file){
   const ext = (file.name.split(".").pop() || "").toLowerCase();
   if (ext === "pdf") return pdfToContent(file);
   if (ext === "docx"){
     if (!window.mammoth) throw new Error("No se pudo cargar el lector de Word. Recarga la página o sube el archivo en PDF.");
     const r = await mammoth.extractRawText({arrayBuffer: await file.arrayBuffer()});
-    return {text: r.value.trim(), images: [], meta: "Word"};
+    let photo = null;
+    try { photo = await photoFromDocx(await file.arrayBuffer()); } catch(e){ photo = null; }
+    return {text: r.value.trim(), images: [], meta: "Word", photo};
   }
   if (ext === "doc") throw new Error("Los .doc antiguos no se pueden leer. Guárdalo como .docx o PDF y vuelve a subirlo.");
   if (["txt","md"].includes(ext)) return {text: (await file.text()).trim(), images: [], meta: "Texto"};
@@ -461,6 +539,10 @@ function setupDrop(kind){
       const c = await readFile(file);
       if (!c.text && !c.images.length) throw new Error("El archivo parece vacío.");
       state[kind] = {name: file.name, ...c};
+      if (kind === "cv"){
+        state.photo = c.photo || null;
+        if (state.photo) toast("He encontrado tu foto en el CV: saldrá también en el nuevo");
+      }
       const words = c.text ? c.text.split(/\s+/).length : 0;
       $("#"+kind+"Meta").textContent = `${c.meta} · ${words ? words + " palabras" : kb(file.size)}`;
     } catch(e){
@@ -476,7 +558,7 @@ function setupDrop(kind){
   ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
   drop.addEventListener("drop", e => handle(e.dataTransfer.files[0]));
   $("#"+kind+"Clear").addEventListener("click", () => {
-    state[kind] = null; pill.classList.add("hidden"); drop.classList.remove("hidden"); refreshGo();
+    state[kind] = null; if (kind === "cv") state.photo = null; pill.classList.add("hidden"); drop.classList.remove("hidden"); refreshGo();
   });
 }
 setupDrop("cv"); setupDrop("job");
@@ -870,9 +952,14 @@ function cvHTML(cv){
   const langs = (cv.idiomas||[]).length ? `<p>${cv.idiomas.map(i => `<b>${esc(i.idioma)}</b>${i.nivel ? " (" + esc(i.nivel) + ")" : ""}`).join(" · ")}</p>` : "";
   const otros = (cv.otros||[]).filter(o => (o.items||[]).length).map(o => sec(o.titulo, `<ul>${o.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`)).join("");
   return `<div class="paper" style="--cvc:${state.color}">
-    <div class="p-name">${esc(cv.nombre)}</div>
-    ${cv.titular ? `<div class="p-title">${esc(cv.titular)}</div>` : ""}
-    <div class="p-contact">${esc(contactLine(cv.contacto).join("  |  "))}</div>
+    <div class="p-head">
+      ${state.photo ? `<img class="p-photo" src="${state.photo}" alt="">` : ""}
+      <div>
+        <div class="p-name">${esc(cv.nombre)}</div>
+        ${cv.titular ? `<div class="p-title">${esc(cv.titular)}</div>` : ""}
+        <div class="p-contact">${esc(contactLine(cv.contacto).join("  |  "))}</div>
+      </div>
+    </div>
     ${sec(L.perfil, cv.perfil ? `<p>${esc(cv.perfil)}</p>` : "")}
     ${sec(L.exp, exp)}
     ${sec(L.edu, edu)}
@@ -934,6 +1021,16 @@ function render(){
           <div class="field"><span class="lbl">Color</span>
             <div class="swatches">${CV_COLORS.map(c => `<button class="sw" style="background:${c.hex}" data-c="${c.hex}" aria-label="Color ${c.name}" aria-pressed="${c.hex===state.color}"></button>`).join("")}</div>
           </div>
+          <div class="field"><span class="lbl">Foto</span>
+            <div class="photo-row">
+              ${state.photo ? `<img class="ph-thumb" src="${state.photo}" alt="Tu foto">` : `<div class="ph-thumb ph-empty">Sin foto</div>`}
+              <div class="ph-btns">
+                <label class="linkbtn" for="photoFile">${state.photo ? "Cambiar foto" : "Añadir foto"}</label>
+                ${state.photo ? `<button class="linkbtn" id="photoRemove" type="button">Quitar foto</button>` : ""}
+                <input type="file" id="photoFile" accept="image/png,image/jpeg,image/webp" hidden>
+              </div>
+            </div>
+          </div>
           <div class="dl">
             <button class="btn btn-tape" id="dlPdf">Descargar PDF</button>
             <button class="btn btn-ghost" id="dlDocx">Descargar Word (.docx)</button>
@@ -950,6 +1047,14 @@ function render(){
       </aside>
     </div>`;
 
+  $("#photoFile").addEventListener("change", async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const url = URL.createObjectURL(f);
+    try { state.photo = cropToPhoto(await loadImg(url)); render(); toast("Foto añadida"); }
+    catch(err){ toast("No se pudo leer la imagen. Prueba con un JPG o PNG."); }
+    finally { URL.revokeObjectURL(url); }
+  });
+  if ($("#photoRemove")) $("#photoRemove").addEventListener("click", () => { state.photo = null; render(); });
   document.querySelectorAll(".sw").forEach(b => b.addEventListener("click", () => {
     state.color = b.dataset.c;
     document.querySelectorAll(".sw").forEach(x => x.setAttribute("aria-pressed", x === b));
@@ -1019,11 +1124,21 @@ function buildPDF(){
     y += 0.8;
   }
 
-  // header
-  para(cv.nombre || "", {size:22, style:"bold", lh:1.15});
-  if (cv.titular){ y += 0.6; para(cv.titular, {size:11.5, style:"bold", color:acc}); }
+  // header (photo on the left when there is one)
+  const PH_W = 26, PH_H = PH_W * 4 / 3;
+  let hi = 0, photoBottom = 0;
+  if (state.photo){
+    try {
+      doc.addImage(state.photo, "JPEG", M, y, PH_W, PH_H);
+      hi = PH_W + 6; photoBottom = y + PH_H;
+      y += 5;
+    } catch(e){ hi = 0; }
+  }
+  para(cv.nombre || "", {size:22, style:"bold", lh:1.15, indent:hi});
+  if (cv.titular){ y += 0.6; para(cv.titular, {size:11.5, style:"bold", color:acc, indent:hi}); }
   const cl = contactLine(cv.contacto);
-  if (cl.length){ y += 1; para(cl.join("   |   "), {size:9, color:gray}); }
+  if (cl.length){ y += 1; para(cl.join("   |   "), {size:9, color:gray, indent:hi}); }
+  if (photoBottom) y = Math.max(y, photoBottom);
 
   if (cv.perfil){ heading(L.perfil); para(cv.perfil); }
   if ((cv.experiencia||[]).length){
@@ -1079,10 +1194,31 @@ async function buildDOCX(){
   const right = {tabStops:[{type: D.TabStopType.RIGHT, position: D.TabStopPosition.MAX}]};
   const tabRun = (text, o) => D.Tab ? new D.TextRun(Object.assign({children:[new D.Tab(), String(text||"")]}, o||{})) : R("\t" + (text||""), o);
 
-  kids.push(P({children:[R(cv.nombre, {bold:true, size:44, color:"121821"})], spacing:{after:40}}));
-  if (cv.titular) kids.push(P({children:[R(cv.titular, {bold:true, size:24, color:acc})], spacing:{after:60}}));
+  const head = [P({children:[R(cv.nombre, {bold:true, size:44, color:"121821"})], spacing:{after:40}})];
+  if (cv.titular) head.push(P({children:[R(cv.titular, {bold:true, size:24, color:acc})], spacing:{after:60}}));
   const cl = contactLine(cv.contacto);
-  if (cl.length) kids.push(P({children:[R(cl.join("   |   "), {size:18, color:GRAY})], spacing:{after:80}}));
+  if (cl.length) head.push(P({children:[R(cl.join("   |   "), {size:18, color:GRAY})], spacing:{after:80}}));
+  if (state.photo && D.ImageRun && D.Table){
+    const bytes = Uint8Array.from(atob(state.photo.split(",")[1]), c => c.charCodeAt(0));
+    const none = {style: D.BorderStyle.NONE, size: 0, color: "FFFFFF"};
+    const cellBorders = {top: none, bottom: none, left: none, right: none};
+    kids.push(new D.Table({
+      width: {size: 100, type: D.WidthType.PERCENTAGE},
+      borders: {top: none, bottom: none, left: none, right: none, insideHorizontal: none, insideVertical: none},
+      rows: [new D.TableRow({children: [
+        new D.TableCell({
+          borders: cellBorders, width: {size: 1750, type: D.WidthType.DXA}, verticalAlign: D.VerticalAlign.CENTER,
+          children: [P({children: [new D.ImageRun({data: bytes, transformation: {width: 92, height: 123}})]})]
+        }),
+        new D.TableCell({
+          borders: cellBorders, verticalAlign: D.VerticalAlign.CENTER, margins: {left: 200},
+          children: head
+        })
+      ]})]
+    }));
+  } else {
+    kids.push(...head);
+  }
 
   const heading = t => kids.push(P({
     children:[R(String(t).toUpperCase(), {bold:true, size:21, color:acc, characterSpacing:20})],
