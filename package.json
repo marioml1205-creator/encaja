@@ -1,0 +1,7 @@
+{
+  "name": "encaja",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Encaja: adapta tu CV a cada oferta de empleo con IA",
+  "engines": { "node": ">=18" }
+}
