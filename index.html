@@ -159,7 +159,24 @@ label.lbl{font-size:13px;font-weight:600;color:var(--muted)}
 .paper-wrap{background:var(--soft);border-radius:var(--r);padding:20px;overflow-x:auto}
 .paper{background:#fff;color:#1e2530;max-width:720px;margin:0 auto;padding:44px 48px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 8px 30px rgba(15,30,51,.12);font-family:Calibri,"Segoe UI",Arial,sans-serif;font-size:13.5px;line-height:1.45;border-radius:3px}
 .paper .p-head{display:flex;gap:20px;align-items:center}
-.paper .p-photo{width:88px;height:117px;object-fit:cover;border-radius:4px;flex:none}
+.paper .p-photo{width:88px;height:117px;object-fit:cover;object-position:center 30%;border-radius:4px;flex:none}
+.paper .p-photo.circ{width:104px;height:104px;border-radius:50%}
+.paper .p-head.pos-derecha{flex-direction:row-reverse;justify-content:space-between}
+.paper .p-head.pos-centro{flex-direction:column;text-align:center;gap:12px}
+.photo-box{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.photo-box .lbl{display:block;font-size:13px;font-weight:600;color:var(--muted)}
+.ph-actions{display:flex;flex-wrap:wrap;gap:6px}
+.chipbtn{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink)}
+.chipbtn:hover{border-color:var(--accent);color:var(--accent)}
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;border-radius:7px;padding:5px 10px;font-size:13px;cursor:pointer;color:var(--muted);font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.ph-opts{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.ph-opts > div{display:flex;flex-direction:column;gap:4px}
+.ph-thumb.circ{width:56px;height:56px;border-radius:50%}
+.crop-wrap{position:relative;overflow:auto;max-height:65vh;background:#e9edf2;touch-action:none}
+.crop-wrap canvas{display:block;width:100%;height:auto;cursor:crosshair;user-select:none}
+.crop-sel{position:absolute;border:2px solid var(--tape);box-shadow:0 0 0 9999px rgba(8,14,24,.45);pointer-events:none;display:none}
 .photo-row{display:flex;gap:12px;align-items:center}
 .ph-thumb{width:48px;height:64px;border-radius:6px;object-fit:cover;background:var(--soft);flex:none}
 .ph-empty{display:grid;place-items:center;font-size:10px;color:var(--muted);text-align:center}
@@ -310,6 +327,7 @@ footer{color:var(--muted);font-size:12.5px;text-align:center}
         <div class="drop-t"><strong>Arrastra tu CV o haz clic</strong><small>PDF, Word (.docx), texto o foto</small></div>
       </label>
       <div class="file-pill hidden" id="cvPill"><span class="nm" id="cvName"></span><span class="meta" id="cvMeta"></span><button class="x" id="cvClear" aria-label="Quitar CV">×</button></div>
+      <div class="photo-box" id="photoCtlTop"></div>
     </div>
 
     <div class="card">
@@ -355,6 +373,17 @@ footer{color:var(--muted);font-size:12.5px;text-align:center}
   <footer>Encaja no inventa experiencia: reordena, reescribe y prioriza lo que ya tienes. Lo que te falta te lo dice aparte.</footer>
 </div>
 <div class="toast" id="toast" role="status"></div>
+<input type="file" id="photoFile" accept="image/png,image/jpeg,image/webp" hidden>
+<div class="modal hidden" id="cropModal" role="dialog" aria-modal="true" aria-labelledby="cropTitle">
+  <div class="modal-box">
+    <div class="ad-top"><span id="cropTitle">Arrastra para seleccionar tu foto</span><button class="x" id="cropClose" aria-label="Cerrar">×</button></div>
+    <div class="crop-wrap" id="cropWrap"><canvas id="cropCanvas"></canvas><div class="crop-sel" id="cropSel"></div></div>
+    <div class="ad-foot">
+      <p>Dibuja un recuadro alrededor de tu cara.</p>
+      <button class="btn btn-primary" id="cropOk" disabled>Usar esta foto</button>
+    </div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -377,7 +406,10 @@ const state = {
   isExample: true,
   color: CV_COLORS[0].hex,
   lastPayload: null,
-  photo: null, // dataURL jpeg 3:4
+  photo: null,        // dataURL (jpeg, original proportions)
+  photoPos: "izquierda", // izquierda | derecha | centro
+  photoShape: "rect",    // rect | circ
+  cvFile: null,
   busy: false
 };
 let cfg = null, sb = null, session = null;
@@ -445,18 +477,35 @@ async function pdfToContent(file){
 /* ---------- photo ---------- */
 function loadImg(src){ return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
 function looksLikePhoto(w, h){ const r = w / h; return w >= 80 && h >= 80 && r > 0.4 && r < 2.6; }
-// Crop to a 3:4 portrait (keeping the upper part, where the face usually is) and export as JPEG.
-function cropToPhoto(src){
+// Keep the photo as found (max 900 px) — the shape is cut only when showing or exporting it.
+function toRaw(src){
   const w = src.naturalWidth || src.width, h = src.naturalHeight || src.height;
-  const target = 3 / 4;
+  const k = Math.min(1, 900 / Math.max(w, h));
+  const c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
+  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.drawImage(src, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", 0.92);
+}
+const cropToPhoto = toRaw; // detection helpers below store the raw photo
+// Cut the photo to the chosen shape: 3:4 rectangle (JPEG) or circle (PNG with transparency).
+async function exportPhoto(shape){
+  const img = await loadImg(state.photo);
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const target = shape === "circ" ? 1 : 3 / 4;
   let sw = w, sh = h, sx = 0, sy = 0;
   if (w / h > target){ sw = h * target; sx = (w - sw) / 2; }
   else { sh = w / target; sy = Math.max(0, (h - sh) * 0.3); }
   const outW = Math.max(1, Math.min(600, Math.round(sw))), outH = Math.round(outW / target);
   const c = document.createElement("canvas"); c.width = outW; c.height = outH;
-  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, outW, outH);
-  ctx.drawImage(src, sx, sy, sw, sh, 0, 0, outW, outH);
-  return c.toDataURL("image/jpeg", 0.9);
+  const ctx = c.getContext("2d");
+  if (shape === "circ"){
+    ctx.beginPath(); ctx.arc(outW / 2, outH / 2, outW / 2, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+    return {data: c.toDataURL("image/png"), fmt: "PNG", ratio: 1};
+  }
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, outW, outH);
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+  return {data: c.toDataURL("image/jpeg", 0.9), fmt: "JPEG", ratio: 4 / 3};
 }
 function pdfObjToCanvas(obj){
   if (!obj) return null;
@@ -505,6 +554,14 @@ async function photoFromPdfPage(page){
     else if (fn === O.paintImageXObject || fn === O.paintImageXObjectRepeat || fn === O.paintInlineImageXObject){
       const w = Math.hypot(ctm[0], ctm[1]), h = Math.hypot(ctm[2], ctm[3]);
       cands.push({ref: args[0], inline: fn === O.paintInlineImageXObject, w, h});
+    }
+    else if ((fn === O.setFillColorN || fn === O.setStrokeColorN) && args[0] === "TilingPattern" && args[2] && args[2].fnArray){
+      // photos clipped to a circle are often painted as a pattern: look inside it
+      const pl = args[2];
+      pl.fnArray.forEach((f2, j) => {
+        if (f2 === O.paintImageXObject || f2 === O.paintImageXObjectRepeat || f2 === O.paintInlineImageXObject)
+          cands.push({ref: pl.argsArray[j][0], inline: f2 === O.paintInlineImageXObject, w: 0, h: 0});
+      });
     }
   }
   const getObj = cd => {
@@ -587,11 +644,13 @@ function setupDrop(kind){
       if (!c.text && !c.images.length) throw new Error("El archivo parece vacío.");
       state[kind] = {name: file.name, ...c};
       if (kind === "cv"){
+        state.cvFile = file;
         state.photo = c.photo || null;
         if (state.photo) toast("He encontrado tu foto en el CV: saldrá también en el nuevo");
+        refreshPhotoUI();
       }
       const words = c.text ? c.text.split(/\s+/).length : 0;
-      $("#"+kind+"Meta").textContent = `${c.meta} · ${words ? words + " palabras" : kb(file.size)}${kind === "cv" && (c.meta === "Word" || /pág/.test(c.meta)) ? (c.photo ? " · foto ✓" : " · sin foto") : ""}`;
+      $("#"+kind+"Meta").textContent = `${c.meta} · ${words ? words + " palabras" : kb(file.size)}${kind === "cv" && (c.meta === "Word" || /pág/.test(c.meta)) ? (c.photo ? " · foto ✓" : "") : ""}`;
     } catch(e){
       state[kind] = null;
       drop.classList.remove("hidden"); pill.classList.add("hidden");
@@ -605,7 +664,7 @@ function setupDrop(kind){
   ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
   drop.addEventListener("drop", e => handle(e.dataTransfer.files[0]));
   $("#"+kind+"Clear").addEventListener("click", () => {
-    state[kind] = null; if (kind === "cv") state.photo = null; pill.classList.add("hidden"); drop.classList.remove("hidden"); refreshGo();
+    state[kind] = null; if (kind === "cv"){ state.photo = null; state.cvFile = null; refreshPhotoUI(); } pill.classList.add("hidden"); drop.classList.remove("hidden"); refreshGo();
   });
 }
 setupDrop("cv"); setupDrop("job");
@@ -970,6 +1029,104 @@ async function boot(){
   route();
 }
 
+/* ---------- photo controls ---------- */
+function photoCtlHTML(id){
+  const p = state.photo, circ = state.photoShape === "circ";
+  const canCrop = !!state.cvFile && /\.(pdf|png|jpe?g|webp)$/i.test(state.cvFile.name);
+  const seg = (group, items, cur) => `<div class="seg" role="group">${items.map(([v, t]) =>
+    `<button type="button" data-${group}="${v}" aria-pressed="${v === cur}">${t}</button>`).join("")}</div>`;
+  return `
+    <span class="lbl">Foto ${id === "top" ? "(opcional)" : ""}</span>
+    <div class="photo-row">
+      ${p ? `<img class="ph-thumb ${circ ? "circ" : ""}" src="${p}" alt="Tu foto" style="object-position:center 30%">` : `<div class="ph-thumb ph-empty">Sin foto</div>`}
+      <div class="ph-actions">
+        <button type="button" class="chipbtn" data-act="upload">${p ? "Cambiar foto" : "Subir foto"}</button>
+        ${canCrop ? `<button type="button" class="chipbtn" data-act="crop">Recortar de mi CV</button>` : ""}
+        ${p ? `<button type="button" class="chipbtn" data-act="remove">Quitar</button>` : ""}
+      </div>
+    </div>
+    ${p ? `<div class="ph-opts">
+      <div><span class="lbl">Posición</span>${seg("pos", [["izquierda","Izquierda"],["centro","Centrada"],["derecha","Derecha"]], state.photoPos)}</div>
+      <div><span class="lbl">Forma</span>${seg("shape", [["rect","Rectangular"],["circ","Redonda"]], state.photoShape)}</div>
+    </div>` : ""}`;
+}
+function refreshPhotoUI(){
+  [["top", "#photoCtlTop"], ["side", "#photoCtlSide"]].forEach(([id, sel]) => {
+    const el = $(sel); if (!el) return;
+    el.innerHTML = photoCtlHTML(id);
+    el.querySelectorAll("[data-act]").forEach(b => b.addEventListener("click", () => {
+      const a = b.dataset.act;
+      if (a === "upload") $("#photoFile").click();
+      else if (a === "crop") openCropper();
+      else if (a === "remove"){ state.photo = null; refreshPhotoUI(); }
+    }));
+    el.querySelectorAll("[data-pos]").forEach(b => b.addEventListener("click", () => { state.photoPos = b.dataset.pos; refreshPhotoUI(); }));
+    el.querySelectorAll("[data-shape]").forEach(b => b.addEventListener("click", () => { state.photoShape = b.dataset.shape; refreshPhotoUI(); }));
+  });
+  if ($("#paperWrap") && state.result) $("#paperWrap").innerHTML = cvHTML(state.result.cv);
+}
+$("#photoFile").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  const url = URL.createObjectURL(f);
+  try { state.photo = toRaw(await loadImg(url)); refreshPhotoUI(); toast("Foto añadida"); }
+  catch(err){ toast("No se pudo leer la imagen. Prueba con un JPG o PNG."); }
+  finally { URL.revokeObjectURL(url); }
+});
+
+/* ---------- cropper: pick the photo straight from the CV page ---------- */
+const crop = {sel: null, start: null};
+async function openCropper(){
+  const f = state.cvFile; if (!f) return;
+  const cv = $("#cropCanvas");
+  try {
+    if (/\.pdf$/i.test(f.name)){
+      const pdf = await pdfjsLib.getDocument({data: await f.arrayBuffer()}).promise;
+      const page = await pdf.getPage(1);
+      const vp = page.getViewport({scale: 2.2});
+      cv.width = vp.width; cv.height = vp.height;
+      await page.render({canvasContext: cv.getContext("2d"), viewport: vp}).promise;
+    } else {
+      const url = URL.createObjectURL(f);
+      const img = await loadImg(url); URL.revokeObjectURL(url);
+      cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+      cv.getContext("2d").drawImage(img, 0, 0);
+    }
+  } catch(e){ toast("No se pudo abrir tu CV para recortar"); return; }
+  crop.sel = null; $("#cropSel").style.display = "none"; $("#cropOk").disabled = true;
+  $("#cropModal").classList.remove("hidden");
+}
+(function(){
+  const cv = $("#cropCanvas"), sel = $("#cropSel");
+  const pos = e => { const r = cv.getBoundingClientRect(); return {x: Math.max(0, Math.min(r.width, e.clientX - r.left)), y: Math.max(0, Math.min(r.height, e.clientY - r.top))}; };
+  const draw = () => {
+    const s = crop.sel; if (!s) return;
+    sel.style.display = "block";
+    sel.style.left = (cv.offsetLeft + s.x) + "px"; sel.style.top = (cv.offsetTop + s.y) + "px";
+    sel.style.width = s.w + "px"; sel.style.height = s.h + "px";
+  };
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); cv.setPointerCapture(e.pointerId); crop.start = pos(e); crop.sel = {...crop.start, w: 0, h: 0}; draw(); });
+  cv.addEventListener("pointermove", e => {
+    if (!crop.start) return;
+    const p = pos(e);
+    crop.sel = {x: Math.min(p.x, crop.start.x), y: Math.min(p.y, crop.start.y), w: Math.abs(p.x - crop.start.x), h: Math.abs(p.y - crop.start.y)};
+    draw();
+  });
+  const end = () => { if (!crop.start) return; crop.start = null; $("#cropOk").disabled = !(crop.sel && crop.sel.w > 12 && crop.sel.h > 12); };
+  cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+  $("#cropClose").addEventListener("click", () => $("#cropModal").classList.add("hidden"));
+  $("#cropOk").addEventListener("click", () => {
+    const s = crop.sel, r = cv.getBoundingClientRect(), k = cv.width / r.width;
+    const out = document.createElement("canvas");
+    out.width = Math.round(s.w * k); out.height = Math.round(s.h * k);
+    out.getContext("2d").drawImage(cv, s.x * k, s.y * k, s.w * k, s.h * k, 0, 0, out.width, out.height);
+    state.photo = toRaw(out);
+    // a square selection usually means a round photo
+    if (Math.abs(s.w / s.h - 1) < 0.15) state.photoShape = "circ";
+    $("#cropModal").classList.add("hidden");
+    refreshPhotoUI(); toast("Foto recortada de tu CV");
+  });
+})();
+
 /* ---------- render ---------- */
 function tape(label, val, cls){
   const v = Math.max(0, Math.min(100, Number(val) || 0));
@@ -999,8 +1156,8 @@ function cvHTML(cv){
   const langs = (cv.idiomas||[]).length ? `<p>${cv.idiomas.map(i => `<b>${esc(i.idioma)}</b>${i.nivel ? " (" + esc(i.nivel) + ")" : ""}`).join(" · ")}</p>` : "";
   const otros = (cv.otros||[]).filter(o => (o.items||[]).length).map(o => sec(o.titulo, `<ul>${o.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`)).join("");
   return `<div class="paper" style="--cvc:${state.color}">
-    <div class="p-head">
-      ${state.photo ? `<img class="p-photo" src="${state.photo}" alt="">` : ""}
+    <div class="p-head pos-${state.photoPos}">
+      ${state.photo ? `<img class="p-photo ${state.photoShape === "circ" ? "circ" : ""}" src="${state.photo}" alt="">` : ""}
       <div>
         <div class="p-name">${esc(cv.nombre)}</div>
         ${cv.titular ? `<div class="p-title">${esc(cv.titular)}</div>` : ""}
@@ -1068,16 +1225,7 @@ function render(){
           <div class="field"><span class="lbl">Color</span>
             <div class="swatches">${CV_COLORS.map(c => `<button class="sw" style="background:${c.hex}" data-c="${c.hex}" aria-label="Color ${c.name}" aria-pressed="${c.hex===state.color}"></button>`).join("")}</div>
           </div>
-          <div class="field"><span class="lbl">Foto</span>
-            <div class="photo-row">
-              ${state.photo ? `<img class="ph-thumb" src="${state.photo}" alt="Tu foto">` : `<div class="ph-thumb ph-empty">Sin foto</div>`}
-              <div class="ph-btns">
-                <label class="linkbtn" for="photoFile">${state.photo ? "Cambiar foto" : "Añadir foto"}</label>
-                ${state.photo ? `<button class="linkbtn" id="photoRemove" type="button">Quitar foto</button>` : ""}
-                <input type="file" id="photoFile" accept="image/png,image/jpeg,image/webp" hidden>
-              </div>
-            </div>
-          </div>
+          <div class="photo-box" id="photoCtlSide" style="border-top:0;padding-top:0"></div>
           <div class="dl">
             <button class="btn btn-tape" id="dlPdf">Descargar PDF</button>
             <button class="btn btn-ghost" id="dlDocx">Descargar Word (.docx)</button>
@@ -1094,14 +1242,7 @@ function render(){
       </aside>
     </div>`;
 
-  $("#photoFile").addEventListener("change", async e => {
-    const f = e.target.files[0]; if (!f) return;
-    const url = URL.createObjectURL(f);
-    try { state.photo = cropToPhoto(await loadImg(url)); render(); toast("Foto añadida"); }
-    catch(err){ toast("No se pudo leer la imagen. Prueba con un JPG o PNG."); }
-    finally { URL.revokeObjectURL(url); }
-  });
-  if ($("#photoRemove")) $("#photoRemove").addEventListener("click", () => { state.photo = null; render(); });
+  refreshPhotoUI();
   document.querySelectorAll(".sw").forEach(b => b.addEventListener("click", () => {
     state.color = b.dataset.c;
     document.querySelectorAll(".sw").forEach(x => x.setAttribute("aria-pressed", x === b));
@@ -1125,7 +1266,8 @@ function pdfSafe(s){
     .replace(/…/g,"...").replace(/[•●▪◦]/g,"-").replace(/€/g,"EUR").replace(/[   ]/g," ").replace(/[^\x00-\xFF]/g,"");
 }
 
-function buildPDF(){
+async function buildPDF(){
+  const photoImg = state.photo ? await exportPhoto(state.photoShape).catch(() => null) : null;
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:"mm", format:"a4"});
   const cv = state.result.cv, L = labels();
@@ -1136,11 +1278,16 @@ function buildPDF(){
   const ensure = h => { if (y + h > H - M){ doc.addPage(); y = M; } };
   function font(size, style, color){ doc.setFont("helvetica", style||"normal"); doc.setFontSize(size); doc.setTextColor(...(color||ink)); }
   function para(text, o){
-    o = Object.assign({size:10, style:"normal", color:ink, indent:0, lh:1.32, width:CW}, o||{});
+    o = Object.assign({size:10, style:"normal", color:ink, indent:0, lh:1.32, width:CW, center:false}, o||{});
     font(o.size, o.style, o.color);
     const lines = doc.splitTextToSize(pdfSafe(text), o.width - o.indent);
     const lh = o.size * PT * o.lh;
-    lines.forEach(ln => { ensure(lh); doc.text(ln, M + o.indent, y, {baseline:"top"}); y += lh; });
+    lines.forEach(ln => {
+      ensure(lh);
+      if (o.center) doc.text(ln, W / 2, y, {baseline:"top", align:"center"});
+      else doc.text(ln, M + o.indent, y, {baseline:"top"});
+      y += lh;
+    });
   }
   function bullet(text){
     const size = 10, lh = size*PT*1.32;
@@ -1171,20 +1318,27 @@ function buildPDF(){
     y += 0.8;
   }
 
-  // header (photo on the left when there is one)
-  const PH_W = 26, PH_H = PH_W * 4 / 3;
-  let hi = 0, photoBottom = 0;
-  if (state.photo){
+  // header: photo left, right or centred on top
+  let hi = 0, hw = CW, center = false, photoBottom = 0;
+  if (photoImg){
+    const PW = photoImg.ratio === 1 ? 30 : 26, PH = PW * photoImg.ratio;
     try {
-      doc.addImage(state.photo, "JPEG", M, y, PH_W, PH_H);
-      hi = PH_W + 6; photoBottom = y + PH_H;
-      y += 5;
-    } catch(e){ hi = 0; }
+      if (state.photoPos === "centro"){
+        doc.addImage(photoImg.data, photoImg.fmt, (W - PW) / 2, y, PW, PH);
+        y += PH + 4; center = true;
+      } else if (state.photoPos === "derecha"){
+        doc.addImage(photoImg.data, photoImg.fmt, W - M - PW, y, PW, PH);
+        hw = CW - PW - 6; photoBottom = y + PH; y += PH > 32 ? 5 : 3;
+      } else {
+        doc.addImage(photoImg.data, photoImg.fmt, M, y, PW, PH);
+        hi = PW + 6; photoBottom = y + PH; y += PH > 32 ? 5 : 3;
+      }
+    } catch(e){}
   }
-  para(cv.nombre || "", {size:22, style:"bold", lh:1.15, indent:hi});
-  if (cv.titular){ y += 0.6; para(cv.titular, {size:11.5, style:"bold", color:acc, indent:hi}); }
+  para(cv.nombre || "", {size:22, style:"bold", lh:1.15, indent:hi, width:hw, center});
+  if (cv.titular){ y += 0.6; para(cv.titular, {size:11.5, style:"bold", color:acc, indent:hi, width:hw, center}); }
   const cl = contactLine(cv.contacto);
-  if (cl.length){ y += 1; para(cl.join("   |   "), {size:9, color:gray, indent:hi}); }
+  if (cl.length){ y += 1; para(cl.join("   |   "), {size:9, color:gray, indent:hi, width:hw, center}); }
   if (photoBottom) y = Math.max(y, photoBottom);
 
   if (cv.perfil){ heading(L.perfil); para(cv.perfil); }
@@ -1241,28 +1395,32 @@ async function buildDOCX(){
   const right = {tabStops:[{type: D.TabStopType.RIGHT, position: D.TabStopPosition.MAX}]};
   const tabRun = (text, o) => D.Tab ? new D.TextRun(Object.assign({children:[new D.Tab(), String(text||"")]}, o||{})) : R("\t" + (text||""), o);
 
-  const head = [P({children:[R(cv.nombre, {bold:true, size:44, color:"121821"})], spacing:{after:40}})];
-  if (cv.titular) head.push(P({children:[R(cv.titular, {bold:true, size:24, color:acc})], spacing:{after:60}}));
+  const photoImg = state.photo && D.ImageRun ? await exportPhoto(state.photoShape).catch(() => null) : null;
+  const pos = state.photoPos;
+  const align = photoImg && pos === "centro" ? D.AlignmentType.CENTER : undefined;
+  const head = [P({alignment: align, children:[R(cv.nombre, {bold:true, size:44, color:"121821"})], spacing:{after:40}})];
+  if (cv.titular) head.push(P({alignment: align, children:[R(cv.titular, {bold:true, size:24, color:acc})], spacing:{after:60}}));
   const cl = contactLine(cv.contacto);
-  if (cl.length) head.push(P({children:[R(cl.join("   |   "), {size:18, color:GRAY})], spacing:{after:80}}));
-  if (state.photo && D.ImageRun && D.Table){
-    const bytes = Uint8Array.from(atob(state.photo.split(",")[1]), c => c.charCodeAt(0));
-    const none = {style: D.BorderStyle.NONE, size: 0, color: "FFFFFF"};
-    const cellBorders = {top: none, bottom: none, left: none, right: none};
-    kids.push(new D.Table({
-      width: {size: 100, type: D.WidthType.PERCENTAGE},
-      borders: {top: none, bottom: none, left: none, right: none, insideHorizontal: none, insideVertical: none},
-      rows: [new D.TableRow({children: [
-        new D.TableCell({
-          borders: cellBorders, width: {size: 1750, type: D.WidthType.DXA}, verticalAlign: D.VerticalAlign.CENTER,
-          children: [P({children: [new D.ImageRun({data: bytes, transformation: {width: 92, height: 123}})]})]
-        }),
-        new D.TableCell({
-          borders: cellBorders, verticalAlign: D.VerticalAlign.CENTER, margins: {left: 200},
-          children: head
-        })
-      ]})]
-    }));
+  if (cl.length) head.push(P({alignment: align, children:[R(cl.join("   |   "), {size:18, color:GRAY})], spacing:{after:80}}));
+  if (photoImg){
+    const bytes = Uint8Array.from(atob(photoImg.data.split(",")[1]), c => c.charCodeAt(0));
+    const pw = photoImg.ratio === 1 ? 108 : 92, ph = Math.round(pw * photoImg.ratio);
+    const imgPara = a => P({alignment: a, children: [new D.ImageRun({data: bytes, transformation: {width: pw, height: ph}})]});
+    if (pos === "centro" || !D.Table){
+      kids.push(imgPara(D.AlignmentType.CENTER), ...head);
+    } else {
+      const none = {style: D.BorderStyle.NONE, size: 0, color: "FFFFFF"};
+      const cb = {top: none, bottom: none, left: none, right: none};
+      const photoCell = new D.TableCell({borders: cb, width: {size: 1900, type: D.WidthType.DXA}, verticalAlign: D.VerticalAlign.CENTER,
+        children: [imgPara(pos === "derecha" ? D.AlignmentType.RIGHT : D.AlignmentType.LEFT)]});
+      const textCell = new D.TableCell({borders: cb, verticalAlign: D.VerticalAlign.CENTER,
+        margins: pos === "derecha" ? {right: 200} : {left: 200}, children: head});
+      kids.push(new D.Table({
+        width: {size: 100, type: D.WidthType.PERCENTAGE},
+        borders: {top: none, bottom: none, left: none, right: none, insideHorizontal: none, insideVertical: none},
+        rows: [new D.TableRow({children: pos === "derecha" ? [textCell, photoCell] : [photoCell, textCell]})]
+      }));
+    }
   } else {
     kids.push(...head);
   }
@@ -1314,7 +1472,7 @@ async function download(kind){
   try {
     if (kind === "pdf" && !(window.jspdf && window.jspdf.jsPDF)) throw new Error("No se pudo cargar el generador de PDF. Recarga la página.");
     if (kind === "docx" && !window.docx) throw new Error("No se pudo cargar el generador de Word. Recarga la página.");
-    const blob = kind === "pdf" ? buildPDF() : await buildDOCX();
+    const blob = kind === "pdf" ? await buildPDF() : await buildDOCX();
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = `${fileBase()}.${kind}`;
@@ -1391,6 +1549,7 @@ state.result = {
     otros: [{titulo:"Certificaciones", items:["Google Ads Search Certification (2024)","Meta Certified Digital Marketing Associate (2024)"]}]
   }
 };
+refreshPhotoUI();
 boot();
 })();
 </script>
