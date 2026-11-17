@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -443,7 +444,7 @@ async function pdfToContent(file){
 }
 /* ---------- photo ---------- */
 function loadImg(src){ return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
-function looksLikePhoto(w, h){ const r = w / h; return w >= 50 && h >= 50 && r > 0.55 && r < 1.35; }
+function looksLikePhoto(w, h){ const r = w / h; return w >= 80 && h >= 80 && r > 0.4 && r < 2.6; }
 // Crop to a 3:4 portrait (keeping the upper part, where the face usually is) and export as JPEG.
 function cropToPhoto(src){
   const w = src.naturalWidth || src.width, h = src.naturalHeight || src.height;
@@ -460,53 +461,99 @@ function cropToPhoto(src){
 function pdfObjToCanvas(obj){
   if (!obj) return null;
   const c = document.createElement("canvas");
-  if (obj.bitmap){
-    c.width = obj.bitmap.width; c.height = obj.bitmap.height;
-    c.getContext("2d").drawImage(obj.bitmap, 0, 0); return c;
-  }
-  if (obj.data && obj.width && obj.height){
-    c.width = obj.width; c.height = obj.height;
-    const ctx = c.getContext("2d"), id = ctx.createImageData(obj.width, obj.height);
-    const n = obj.width * obj.height, src = obj.data, dst = id.data;
-    if (src.length === n * 4) dst.set(src);
-    else if (src.length === n * 3){ for (let i = 0, j = 0; i < n; i++){ dst[j++] = src[i*3]; dst[j++] = src[i*3+1]; dst[j++] = src[i*3+2]; dst[j++] = 255; } }
-    else return null;
-    ctx.putImageData(id, 0, 0); return c;
-  }
+  try {
+    if (obj.bitmap){
+      c.width = obj.bitmap.width; c.height = obj.bitmap.height;
+      c.getContext("2d").drawImage(obj.bitmap, 0, 0); return c;
+    }
+    if (obj.data && obj.width && obj.height){
+      c.width = obj.width; c.height = obj.height;
+      const ctx = c.getContext("2d"), id = ctx.createImageData(obj.width, obj.height);
+      const n = obj.width * obj.height, src = obj.data, dst = id.data;
+      if (src.length >= n * 4) dst.set(src.subarray ? src.subarray(0, n * 4) : src.slice(0, n * 4));
+      else if (src.length >= n * 3){ for (let i = 0, j = 0; i < n; i++){ dst[j++] = src[i*3]; dst[j++] = src[i*3+1]; dst[j++] = src[i*3+2]; dst[j++] = 255; } }
+      else if (src.length >= n){ for (let i = 0, j = 0; i < n; i++){ const v = src[i]; dst[j++] = v; dst[j++] = v; dst[j++] = v; dst[j++] = 255; } }
+      else return null;
+      ctx.putImageData(id, 0, 0); return c;
+    }
+  } catch(e){}
   return null;
 }
-// Find a portrait-sized picture on the first page of a PDF CV.
+// True when an image is mostly one flat color (backgrounds, icons, decorative shapes).
+function isFlat(c){
+  try {
+    const s = document.createElement("canvas"); s.width = 24; s.height = 24;
+    const x = s.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, 24, 24); x.drawImage(c, 0, 0, 24, 24);
+    const d = x.getImageData(0, 0, 24, 24).data; let sum = 0, sum2 = 0, n = 0;
+    for (let i = 0; i < d.length; i += 4){ const v = (d[i] + d[i+1] + d[i+2]) / 3; sum += v; sum2 += v * v; n++; }
+    const mean = sum / n; return Math.sqrt(sum2 / n - mean * mean) < 12;
+  } catch(e){ return false; }
+}
+// Find the picture most likely to be the photo on the first page of a PDF CV.
 async function photoFromPdfPage(page){
-  const O = pdfjsLib.OPS, ops = await page.getOperatorList(), pageW = page.getViewport({scale: 1}).width;
+  const O = pdfjsLib.OPS, ops = await page.getOperatorList();
+  const vp = page.getViewport({scale: 1}), pageW = vp.width, pageH = vp.height;
   const mul = (m, n) => [m[0]*n[0]+m[2]*n[1], m[1]*n[0]+m[3]*n[1], m[0]*n[2]+m[2]*n[3], m[1]*n[2]+m[3]*n[3], m[0]*n[4]+m[2]*n[5]+m[4], m[1]*n[4]+m[3]*n[5]+m[5]];
   let ctm = [1,0,0,1,0,0]; const stack = []; const cands = [];
   for (let i = 0; i < ops.fnArray.length; i++){
-    const fn = ops.fnArray[i], args = ops.argsArray[i];
+    const fn = ops.fnArray[i], args = ops.argsArray[i] || [];
     if (fn === O.save) stack.push(ctm.slice());
     else if (fn === O.restore) ctm = stack.pop() || [1,0,0,1,0,0];
     else if (fn === O.transform) ctm = mul(ctm, args);
-    else if (fn === O.paintImageXObject){
+    else if (fn === O.paintFormXObjectBegin){ stack.push(ctm.slice()); if (Array.isArray(args[0]) && args[0].length === 6) ctm = mul(ctm, args[0]); }
+    else if (fn === O.paintFormXObjectEnd) ctm = stack.pop() || [1,0,0,1,0,0];
+    else if (fn === O.paintImageXObject || fn === O.paintImageXObjectRepeat || fn === O.paintInlineImageXObject){
       const w = Math.hypot(ctm[0], ctm[1]), h = Math.hypot(ctm[2], ctm[3]);
-      if (w < pageW * 0.45 && w > 30 && looksLikePhoto(w, h)) cands.push({name: args[0], area: w * h});
+      cands.push({ref: args[0], inline: fn === O.paintInlineImageXObject, w, h});
     }
   }
-  cands.sort((a, b) => b.area - a.area);
-  for (const cd of cands.slice(0, 3)){
-    const store = String(cd.name).startsWith("g_") ? page.commonObjs : page.objs;
-    const obj = await new Promise(res => { const t = setTimeout(() => res(null), 2500); try { store.get(cd.name, o => { clearTimeout(t); res(o); }); } catch(e){ clearTimeout(t); res(null); } });
-    const c = pdfObjToCanvas(obj);
-    if (c && looksLikePhoto(c.width, c.height)) return cropToPhoto(c);
+  const getObj = cd => {
+    if (cd.inline) return Promise.resolve(cd.ref);
+    const name = String(cd.ref);
+    const stores = name.startsWith("g_") ? [page.commonObjs, page.objs] : [page.objs, page.commonObjs];
+    return new Promise(res => {
+      const t = setTimeout(() => res(null), 3000);
+      for (const st of stores){
+        try { if (st.has && st.has(name)){ clearTimeout(t); return res(st.get(name)); } } catch(e){}
+      }
+      try { stores[0].get(name, o => { clearTimeout(t); res(o); }); } catch(e){ clearTimeout(t); res(null); }
+    });
+  };
+  const found = [];
+  const seen = new Set();
+  for (const cd of cands.slice(0, 40)){
+    const key = cd.inline ? Math.random() : String(cd.ref);
+    if (seen.has(key)) continue; seen.add(key);
+    const c = pdfObjToCanvas(await getObj(cd));
+    if (!c || !looksLikePhoto(c.width, c.height) || isFlat(c)) continue;
+    const fullPage = cd.w > pageW * 0.85 && cd.h > pageH * 0.6;
+    if (fullPage) continue;
+    const known = cd.w > 2 && cd.h > 2;
+    if (known && (cd.w < 45 || cd.h < 45 || cd.w > pageW * 0.75)) continue; // icons, logos or banners
+    if (!known && (c.width < 150 || c.height < 150)) continue;
+    found.push({c, score: known ? 1e9 + cd.w * cd.h : c.width * c.height});
   }
-  return null;
+  found.sort((a, b) => b.score - a.score);
+  return found.length ? cropToPhoto(found[0].c) : null;
 }
+// Word: look at every picture stored in the file (body, header, text boxes, shapes).
 async function photoFromDocx(buf){
-  const srcs = [];
-  await mammoth.convertToHtml({arrayBuffer: buf}, {convertImage: mammoth.images.imgElement(img =>
-    img.read("base64").then(b => { srcs.push(`data:${img.contentType};base64,${b}`); return {src: ""}; }))});
-  for (const src of srcs.slice(0, 6)){
-    try { const i = await loadImg(src); if (looksLikePhoto(i.naturalWidth, i.naturalHeight)) return cropToPhoto(i); } catch(e){}
+  if (!window.JSZip) return null;
+  const zip = await JSZip.loadAsync(buf);
+  const files = Object.keys(zip.files).filter(n => /^word\/media\/.+\.(png|jpe?g|gif|bmp|webp)$/i.test(n));
+  let best = null;
+  for (const name of files.slice(0, 20)){
+    const ext = name.split(".").pop().toLowerCase();
+    const mime = ext === "jpg" ? "image/jpeg" : "image/" + ext;
+    const blob = new Blob([await zip.file(name).async("uint8array")], {type: mime});
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = await loadImg(url);
+      const w = img.naturalWidth, h = img.naturalHeight;
+      if (w >= 150 && h >= 150 && looksLikePhoto(w, h) && !isFlat(img) && (!best || w * h > best.area)) best = {area: w * h, photo: cropToPhoto(img)};
+    } catch(e){} finally { URL.revokeObjectURL(url); }
   }
-  return null;
+  return best ? best.photo : null;
 }
 
 async function readFile(file){
@@ -544,7 +591,7 @@ function setupDrop(kind){
         if (state.photo) toast("He encontrado tu foto en el CV: saldrá también en el nuevo");
       }
       const words = c.text ? c.text.split(/\s+/).length : 0;
-      $("#"+kind+"Meta").textContent = `${c.meta} · ${words ? words + " palabras" : kb(file.size)}`;
+      $("#"+kind+"Meta").textContent = `${c.meta} · ${words ? words + " palabras" : kb(file.size)}${kind === "cv" && (c.meta === "Word" || /pág/.test(c.meta)) ? (c.photo ? " · foto ✓" : " · sin foto") : ""}`;
     } catch(e){
       state[kind] = null;
       drop.classList.remove("hidden"); pill.classList.add("hidden");
