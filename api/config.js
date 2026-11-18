@@ -8,6 +8,7 @@ module.exports = (req, res) => {
     supabaseUrl: SB_URL,
     supabaseAnonKey: SB_ANON,
     adTagUrl: process.env.AD_TAG_URL || "",
+    turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || "",
     adSeconds: AD_SECONDS,
     dailyLimit: DAILY_LIMIT
   });

@@ -8,6 +8,7 @@ const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || "";
 const MODEL = process.env.CLAUDE_MODEL || "claude-haiku-4-5";
 const AD_SECONDS = Number(process.env.AD_SECONDS || 30);
 const DAILY_LIMIT = Number(process.env.FREE_DAILY_LIMIT || 5);
+const IP_DAILY_LIMIT = Number(process.env.IP_DAILY_LIMIT || 8);
 const MAX_CHARS = 30000;
 
 function configured() {
@@ -118,6 +119,25 @@ function parseJSON(text) {
   return JSON.parse(t.slice(a, b + 1));
 }
 
+// Identificador cifrado de la IP (nunca se guarda la IP en claro).
+function ipHash(req) {
+  const fwd = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  const ip = fwd || String(req.headers["x-real-ip"] || "") || (req.socket && req.socket.remoteAddress) || "desconocida";
+  const salt = process.env.IP_SALT || SB_SERVICE.slice(-24);
+  return crypto.createHash("sha256").update(salt + "|" + ip).digest("hex").slice(0, 40);
+}
+
+// Usos completados en las últimas 24 h por usuario y por IP.
+async function usage(userId, ip) {
+  const since = encodeURIComponent(new Date(Date.now() - 24 * 3600 * 1000).toISOString());
+  const [byUser, byIp] = await Promise.all([
+    db(`usos?select=id&user_id=eq.${userId}&used_at=not.is.null&created_at=gte.${since}`),
+    db(`usos?select=id&ip_hash=eq.${ip}&used_at=not.is.null&created_at=gte.${since}`)
+  ]);
+  const remaining = Math.max(0, Math.min(DAILY_LIMIT - byUser.length, IP_DAILY_LIMIT - byIp.length));
+  return { user: byUser.length, ip: byIp.length, remaining };
+}
+
 function encrypt(plain, keyHex) {
   const iv = crypto.randomBytes(12);
   const c = crypto.createCipheriv("aes-256-gcm", Buffer.from(keyHex, "hex"), iv);
@@ -126,6 +146,7 @@ function encrypt(plain, keyHex) {
 }
 
 module.exports = {
-  crypto, SB_URL, SB_ANON, AD_SECONDS, DAILY_LIMIT, MAX_CHARS,
+  crypto, SB_URL, SB_ANON, AD_SECONDS, DAILY_LIMIT, IP_DAILY_LIMIT, MAX_CHARS,
+  ipHash, usage,
   configured, verifyUser, db, buildPrompt, callClaude, parseJSON, encrypt
 };
