@@ -902,6 +902,7 @@ async function decrypt(enc, keyHex){
 function friendlyError(e){
   const code = e && (e.code || (e.body && e.body.error));
   if (e && e.status === 401) return "Tu sesión ha caducado. Vuelve a pulsar el botón.";
+  if (code === "iv_limit") return `Has llegado al límite de ${e.body.limit} preparaciones de entrevista en 24 horas. Vuelve mañana.`;
   if (code === "limit") return `Has llegado al límite de ${e.body.limit} CVs en 24 horas. Vuelve mañana.`;
   if (code === "ai") return "La IA no ha podido generar el CV. No se te ha descontado el uso: vuelve a intentarlo.";
   if (code === "image") return "Alguna imagen es demasiado grande. Prueba con una captura más pequeña.";
@@ -945,6 +946,7 @@ async function runAI(extra){
     await new Promise(res => { $("#adContinue").onclick = res; });
     closeAd();
 
+    if (extra && state.result && state.result.entrevista && !data.entrevista) data.entrevista = state.result.entrevista;
     state.result = data; state.isExample = false; state.savedId = null;
     if (!extra) state.lastPayload = payload;
     render();
@@ -964,14 +966,69 @@ $("#go").addEventListener("click", () => runAI(null));
 function refine(instr){
   if (!instr) return;
   if (state.isExample || !state.lastPayload){ toast("Primero adapta tu propio CV"); return; }
-  runAI({previous: state.result, instruction: instr});
+  const {entrevista, ...prev} = state.result;
+  runAI({previous: prev, instruction: instr});
+}
+
+/* ---------- interview questions (own ad, own daily limit) ---------- */
+async function runInterview(){
+  if (state.busy || !state.result || state.isExample) return;
+  showErr("");
+  state.busy = true; refreshGo();
+  openAd();
+  $("#adStatus").textContent = "Mientras ves el anuncio, la IA prepara tus preguntas de entrevista.";
+  let failed = false;
+  try {
+    if (!(await ensureSession())) throw {code: "auth"};
+    const st = await api("/api/start", {kind: "interview"});
+    const ticket = st.ticket;
+    const r = state.result, p = state.lastPayload || {};
+    const genP = api("/api/adapt", {
+      ticket, mode: "interview",
+      cv: r.cv, puesto: r.puesto || "", empresa: r.empresa || "",
+      faltan: r.faltan || [], coincidencias: r.coincidencias || [], jobText: p.jobText || ""
+    });
+    genP.catch(err => { if (!failed){ failed = true; closeAd(); showErr(friendlyError(err)); } });
+
+    await playAd();
+    if (failed) return;
+    $("#adStatus").textContent = "Terminando tus preguntas…";
+    $("#adContinue").textContent = "Preparando…";
+    const enc = await genP;
+    let key = null;
+    for (let i = 0; i < 6 && !key; i++){
+      try { key = (await api("/api/unlock", {ticket})).key; }
+      catch(err){ if (err.status === 425) await sleep(((err.body && err.body.wait) || 1) * 1000); else throw err; }
+    }
+    if (!key) throw {code:"ticket"};
+    const data = JSON.parse(await decrypt(enc, key));
+
+    $("#adStatus").textContent = "¡Listo!";
+    $("#adContinue").textContent = "Ver preguntas";
+    $("#adContinue").disabled = false;
+    await new Promise(res => { $("#adContinue").onclick = res; });
+    closeAd();
+
+    state.result.entrevista = data.entrevista;
+    render();
+    if (state.savedId && !isAnon()){
+      const {data: row} = await sb.from("cvs").select("data").eq("id", state.savedId).single();
+      if (row && row.data){ row.data.result = state.result; await sb.from("cvs").update({data: row.data}).eq("id", state.savedId); }
+    }
+    const card = $("#ivCard"); if (card) card.scrollIntoView({behavior:"smooth", block:"start"});
+  } catch(e){
+    if (!failed){ failed = true; closeAd(); showErr(friendlyError(e)); }
+    if (e && e.status === 401) { session = null; await ensureSession(); route(); }
+  } finally {
+    state.busy = false; refreshGo();
+  }
 }
 
 /* ---------- uses counter ---------- */
 let usesLeft = null;
 function setUses(n){
   usesLeft = Math.max(0, n);
-  $("#usesLeft").textContent = `${usesLeft} CV${usesLeft === 1 ? "" : "s"} gratis hoy`;
+  $("#usesLeft").textContent = usesLeft >= 900 ? "CVs ilimitados" : `${usesLeft} CV${usesLeft === 1 ? "" : "s"} gratis hoy`;
 }
 
 /* ---------- auth (optional) ---------- */
@@ -1375,7 +1432,7 @@ function render(){
         <p>${esc(m.detalle)}</p></div></li>`).join("")}</ol>
     </div>
 
-    ${(r.entrevista||[]).length ? `<div class="card">
+    ${(r.entrevista||[]).length ? `<div class="card" id="ivCard">
       <div class="iv-head"><h3>Prepárate para la entrevista</h3><p>Preguntas que probablemente te harán para este puesto. Pulsa en cada una para ver el consejo y una respuesta de ejemplo con tu experiencia.</p></div>
       <div class="iv">${r.entrevista.map((q,i) => `<details${i===0?" open":""}>
         <summary><span class="n">${i+1}</span><span class="q">${esc(q.pregunta)}</span></summary>
@@ -1385,7 +1442,10 @@ function render(){
           ${q.ejemplo ? `<div><div class="lb">Respuesta de ejemplo</div><div class="ex">"${esc(q.ejemplo)}"</div></div>` : ""}
         </div></details>`).join("")}</div>
       <p class="note" style="margin:0">Adapta las respuestas a tu forma de hablar: practícalas en voz alta, pero no las memorices palabra por palabra. Más consejos en la <a href="/guias/preguntas-entrevista.html">guía de preguntas de entrevista</a>.</p>
-    </div>` : ""}
+    </div>` : (state.isExample ? "" : `<div class="card" id="ivCard">
+      <div class="iv-head"><h3>Prepárate para la entrevista</h3><p>Descubre las 6 preguntas que probablemente te harán para este puesto, con consejos y una respuesta de ejemplo basada en tu experiencia. No gasta ninguno de tus CVs del día.</p></div>
+      <button class="btn btn-primary" id="ivBtn" style="align-self:flex-start">Preparar mi entrevista</button>
+    </div>`)}
 
     <div class="cv-area">
       <div class="paper-wrap" id="paperWrap">${cvHTML(r.cv)}</div>
@@ -1419,6 +1479,7 @@ function render(){
     $("#paperWrap").innerHTML = cvHTML(state.result.cv);
   }));
   if ($("#saveSignup")) $("#saveSignup").addEventListener("click", () => openAuth("signup"));
+  if ($("#ivBtn")) $("#ivBtn").addEventListener("click", runInterview);
   $("#dlPdf").addEventListener("click", () => download("pdf"));
   $("#dlDocx").addEventListener("click", () => download("docx"));
   $("#copyTxt").addEventListener("click", copyText);
