@@ -56,6 +56,7 @@ const SCHEMA = `{
   "faltan": ["requisitos/palabras clave de la oferta que el CV NO demuestra"],
   "mejoras": [{"titulo": "acción concreta", "detalle": "por qué y cómo hacerlo", "prioridad": "alta|media|baja"}],
   "cambios": ["qué has cambiado en el CV nuevo y por qué (frases cortas)"],
+  "entrevista": [{"pregunta": "", "por_que": "qué quiere comprobar el entrevistador", "como_responder": "consejo concreto en 1-2 frases", "ejemplo": "respuesta de ejemplo en primera persona"}],
   "cv": {
     "nombre": "", "titular": "titular profesional orientado al puesto",
     "contacto": {"email": "", "telefono": "", "ubicacion": "", "linkedin": "", "web": ""},
@@ -83,8 +84,9 @@ REGLAS ESTRICTAS
 8. Copia los datos de contacto exactamente como aparecen en el CV. Deja vacíos los campos que no existan; omite secciones vacías con [].
 9. Puntuaciones honestas: "puntuacion_actual" = encaje del CV original con la oferta; "puntuacion_nueva" = encaje del CV nuevo. Si faltan requisitos importantes, la nueva no puede ser muy alta.
 10. "mejoras": entre 4 y 8, ordenadas de más a menos prioridad, concretas para este candidato y esta oferta.
-11. Idioma del CV nuevo: ${L}. Los textos de análisis (veredicto, mejoras, cambios, coincidencias, faltan) siempre en español.
-${notes ? `12. Petición del candidato: "${notes}". Tenla en cuenta sin romper las reglas anteriores.\n` : ""}
+11. Idioma del CV nuevo: ${L}. Los textos de análisis (veredicto, mejoras, cambios, coincidencias, faltan, por_que, como_responder) siempre en español. "pregunta" y "ejemplo" en el idioma del CV nuevo.
+12. "entrevista": exactamente 6 preguntas que probablemente le harán en una entrevista para ESTA oferta: 2 generales (presentación, motivación por el puesto o la empresa), 3 sobre los requisitos y funciones de la oferta, y 1 sobre su punto más débil frente a la oferta (algo de "faltan"). "ejemplo": 2-4 frases que el candidato podría decir, basadas SOLO en datos reales de su CV (nunca inventes experiencia; si le falta algo, la respuesta reconoce la carencia con honestidad y muestra cómo la compensa o la está trabajando).
+${notes ? `13. Petición del candidato: "${notes}". Tenla en cuenta sin romper las reglas anteriores.\n` : ""}
 ${imgDesc.length ? "IMÁGENES ADJUNTAS\n" + imgDesc.join("\n") + "\n" : ""}
 === CV DEL CANDIDATO ===
 ${cvText ? cvText.slice(0, MAX_CHARS) : "(ver imágenes adjuntas)"}
