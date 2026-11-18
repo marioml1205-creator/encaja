@@ -193,7 +193,7 @@ label.linkbtn{cursor:pointer}
 .paper .p-entry{margin-top:8px}
 .paper .p-row{display:flex;justify-content:space-between;gap:12px}
 .paper .p-row b{color:#121821}
-.paper .p-row span{color:#5c6673;white-space:nowrap;font-size:12.5px}
+.paper .p-row > span{color:#5c6673;white-space:nowrap;font-size:12.5px}
 .paper .p-org{font-style:italic;color:#47515e;font-size:13px}
 .paper ul{margin:4px 0 0;padding-left:18px}
 .paper li{margin:2px 0}
@@ -203,6 +203,74 @@ label.linkbtn{cursor:pointer}
 .sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
 .dl{display:flex;flex-direction:column;gap:8px}
 .note{font-size:12.5px;color:var(--muted);margin:0}
+
+/* templates */
+.cv-col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.edbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.edbar .btn{padding:8px 14px}
+.edbar .note{flex:1 1 200px}
+.tpls{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tplbtn{display:flex;flex-direction:column;align-items:center;gap:5px;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 6px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted)}
+.tplbtn[aria-pressed="true"]{border-color:var(--accent);color:var(--ink);box-shadow:0 0 0 1px var(--accent)}
+.tpl-mini{width:46px;height:58px;background:#fff;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.15);position:relative;overflow:hidden;display:block}
+.tpl-mini i{position:absolute;left:8px;right:8px;height:3px;border-radius:2px;background:#cfd5dd}
+.tpl-mini i:nth-child(1){top:9px;height:5px;background:#5c6673;right:16px}
+.tpl-mini i:nth-child(2){top:22px;background:var(--accent)}
+.tpl-mini i:nth-child(3){top:32px;box-shadow:0 7px 0 #cfd5dd,0 14px 0 #cfd5dd}
+.m-moderna{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 18%,#fff) 0 32%,#fff 32%)}
+.m-moderna i{left:19px !important}
+.m-banda{background:linear-gradient(#fff,#fff) 0 17px/100% 100% no-repeat,var(--accent)}
+.m-banda i:nth-child(1){top:6px;background:#fff}
+.m-minimal i:nth-child(1){left:12px;right:12px;background:#121821;height:3px}
+.m-minimal i:nth-child(2){background:#cfd5dd;height:1px}
+.paper .p-htxt{min-width:0}
+.paper .p-head.nophoto{display:block}
+.paper .csep{color:#b8bfc8;margin:0 6px}
+.paper .dot{color:#8a929c}
+/* moderna */
+.paper.t-moderna{padding:0;display:grid;grid-template-columns:32% 1fr}
+.t-moderna .p-side{background:color-mix(in srgb,var(--cvc) 10%,#fff);padding:34px 20px;font-size:12.5px}
+.t-moderna .p-main{padding:38px 34px 38px 28px;min-width:0}
+.t-moderna .p-ph{text-align:center;margin-bottom:6px}
+.t-moderna .p-ph .p-photo{display:inline-block}
+.t-moderna .p-side .p-sec:first-of-type{margin-top:6px}
+.t-moderna .p-side h4{font-size:11.5px}
+.t-moderna .ci{margin:3px 0;word-break:break-word}
+.t-moderna .p-sk{margin:4px 0 7px}
+.t-moderna .p-lang{display:block;margin:3px 0}
+/* banda */
+.t-banda .p-band{background:var(--cvc);margin:-44px -48px 0;padding:28px 48px;color:#fff;border-radius:3px 3px 0 0}
+.t-banda .p-band .p-name{color:#fff}
+.t-banda .p-band .p-title,.t-banda .p-band .p-contact{color:color-mix(in srgb,var(--cvc) 15%,#fff)}
+.t-banda .p-band .csep{color:rgba(255,255,255,.5)}
+.t-banda .p-sec h4{border-bottom:0;border-left:3px solid var(--cvc);padding:1px 0 1px 8px}
+/* minimal */
+.paper.t-minimal{font-family:Georgia,"Times New Roman",serif}
+.t-minimal .p-head.nophoto,.t-minimal .p-head.pos-centro{text-align:center}
+.t-minimal .p-name{font-weight:400;font-size:30px;letter-spacing:.01em}
+.t-minimal .p-sec h4{color:#121821;letter-spacing:.2em;font-size:11.5px;border-bottom:1px solid #d5dae0;padding-bottom:4px}
+/* compact */
+.paper.dense{font-size:12.6px;line-height:1.38}
+.paper.dense .p-sec{margin-top:11px}
+.paper.dense .p-entry{margin-top:5px}
+/* editing */
+.paper.editing [data-k]{outline:1px dashed color-mix(in srgb,var(--cvc) 45%,transparent);outline-offset:1px;border-radius:2px;cursor:text;min-width:1.5em;display:inline-block}
+.paper.editing div[data-k],.paper.editing p[data-k]{display:block}
+.paper.editing [data-k]:hover{background:color-mix(in srgb,var(--cvc) 7%,transparent)}
+.paper.editing [data-k]:focus{outline:2px solid var(--cvc);background:#fff;color:#121821}
+.paper.editing [data-k]:empty::before{content:attr(data-ph);color:#a3abb5;font-style:italic;font-weight:400}
+.paper.editing .p-entry{position:relative;padding-right:52px}
+.paper.editing .p-entry > .ectl-e{position:absolute;top:0;right:0;margin:0}
+.paper.editing li{position:relative}
+.ectl{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle;user-select:none}
+.eb{border:1px solid #d5dae0;background:#fff;color:#5c6673;border-radius:6px;font:600 11.5px/1 system-ui,sans-serif;padding:3px 6px;cursor:pointer;letter-spacing:0;text-transform:none}
+.eb:hover{border-color:var(--cvc);color:var(--cvc)}
+.p-sec > .ectl,.p-entry > .ectl:not(.ectl-e){display:flex;margin:6px 0 0}
+@media (hover:hover){.paper.editing li .ectl,.paper.editing p .ectl,.paper.editing .p-lang .ectl,.paper.editing .p-sk .ectl,.paper.editing h4 .ectl{opacity:0;transition:opacity .12s}
+.paper.editing li:hover .ectl,.paper.editing p:hover .ectl,.paper.editing .p-lang:hover .ectl,.paper.editing .p-sk:hover .ectl,.paper.editing .p-sec:hover h4 .ectl,.paper.editing li:focus-within .ectl{opacity:1}}
+.addbar{margin-top:18px;display:flex;justify-content:center}
+.t-banda .p-band .eb{background:rgba(255,255,255,.9)}
+@media (max-width:640px){.paper.t-moderna{grid-template-columns:1fr}}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:10;max-width:90vw}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .hidden{display:none !important}
@@ -450,6 +518,8 @@ const state = {
   photo: null,        // dataURL (jpeg, original proportions)
   photoPos: "izquierda", // izquierda | derecha | centro
   photoShape: "rect",    // rect | circ
+  tpl: "clasica",        // clasica | moderna | banda | minimal
+  dense: false,
   cvFile: null,
   busy: false
 };
@@ -948,6 +1018,7 @@ async function runAI(extra){
 
     if (extra && state.result && state.result.entrevista && !data.entrevista) data.entrevista = state.result.entrevista;
     state.result = data; state.isExample = false; state.savedId = null;
+    editing = false; undoStack = [];
     if (!extra) state.lastPayload = payload;
     render();
     saveCv();
@@ -1153,7 +1224,7 @@ async function saveCv(){
       empresa: state.result.empresa || "",
       data: {
         result: state.result,
-        photo: state.photo, photoPos: state.photoPos, photoShape: state.photoShape, color: state.color,
+        photo: state.photo, photoPos: state.photoPos, photoShape: state.photoShape, color: state.color, tpl: state.tpl, dense: state.dense,
         payload: {cvText: p.cvText || "", jobText: p.jobText || "", lang: p.lang || "auto", notes: p.notes || ""}
       }
     }).select("id").single();
@@ -1189,6 +1260,7 @@ async function loadCv(id){
   state.result = d.result; state.isExample = false; state.savedId = data.id;
   state.photo = d.photo || null; state.photoPos = d.photoPos || "izquierda"; state.photoShape = d.photoShape || "rect";
   if (d.color) state.color = d.color;
+  state.tpl = d.tpl || "clasica"; state.dense = !!d.dense; editing = false; undoStack = [];
   state.lastPayload = d.payload && d.payload.cvText ? {...d.payload, images: []} : null;
   $("#cvsModal").classList.add("hidden");
   render(); refreshPhotoUI();
@@ -1258,7 +1330,7 @@ function photoCtlHTML(id){
       </div>
     </div>
     ${p ? `<div class="ph-opts">
-      <div><span class="lbl">Posición</span>${seg("pos", [["izquierda","Izquierda"],["centro","Centrada"],["derecha","Derecha"]], state.photoPos)}</div>
+      ${state.tpl === "moderna" ? "" : `<div><span class="lbl">Posición</span>${seg("pos", [["izquierda","Izquierda"],["centro","Centrada"],["derecha","Derecha"]], state.photoPos)}</div>`}
       <div><span class="lbl">Forma</span>${seg("shape", [["rect","Rectangular"],["circ","Redonda"]], state.photoShape)}</div>
     </div>` : ""}`;
 }
@@ -1270,17 +1342,17 @@ function refreshPhotoUI(){
       const a = b.dataset.act;
       if (a === "upload") $("#photoFile").click();
       else if (a === "crop") openCropper();
-      else if (a === "remove"){ state.photo = null; refreshPhotoUI(); }
+      else if (a === "remove"){ state.photo = null; refreshPhotoUI(); persistSoon(); }
     }));
-    el.querySelectorAll("[data-pos]").forEach(b => b.addEventListener("click", () => { state.photoPos = b.dataset.pos; refreshPhotoUI(); }));
-    el.querySelectorAll("[data-shape]").forEach(b => b.addEventListener("click", () => { state.photoShape = b.dataset.shape; refreshPhotoUI(); }));
+    el.querySelectorAll("[data-pos]").forEach(b => b.addEventListener("click", () => { state.photoPos = b.dataset.pos; refreshPhotoUI(); persistSoon(); }));
+    el.querySelectorAll("[data-shape]").forEach(b => b.addEventListener("click", () => { state.photoShape = b.dataset.shape; refreshPhotoUI(); persistSoon(); }));
   });
   if ($("#paperWrap") && state.result) $("#paperWrap").innerHTML = cvHTML(state.result.cv);
 }
 $("#photoFile").addEventListener("change", async e => {
   const f = e.target.files[0]; e.target.value = ""; if (!f) return;
   const url = URL.createObjectURL(f);
-  try { state.photo = toRaw(await loadImg(url)); refreshPhotoUI(); toast("Foto añadida"); }
+  try { state.photo = toRaw(await loadImg(url)); refreshPhotoUI(); persistSoon(); toast("Foto añadida"); }
   catch(err){ toast("No se pudo leer la imagen. Prueba con un JPG o PNG."); }
   finally { URL.revokeObjectURL(url); }
 });
@@ -1352,45 +1424,246 @@ function contactLine(c){
   c = c || {};
   return [c.email, c.telefono, c.ubicacion, c.linkedin, c.web].filter(x => x && String(x).trim()).map(String);
 }
-function cvHTML(cv){
-  const sec = (t, body) => body ? `<div class="p-sec"><h4>${esc(t)}</h4>${body}</div>` : "";
+
+/* ---------- CV templates + inline editing ---------- */
+const TPLS = [["clasica","Clásica"],["moderna","Moderna"],["banda","Cabecera"],["minimal","Minimalista"]];
+const CONTACT_KEYS = [["email","Email"],["telefono","Teléfono"],["ubicacion","Ciudad"],["linkedin","LinkedIn"],["web","Web"]];
+let editing = false, undoStack = [];
+const nz = a => (a || []).filter(x => x != null && String(x).trim());
+
+function ed(k, val, o){
+  o = o || {};
+  const v = Array.isArray(val) ? val.join(", ") : String(val ?? "");
+  if (!editing && !v.trim()) return "";
+  const tag = o.tag || "span";
+  const a = editing ? ` contenteditable="true" spellcheck="true" data-k="${k}"${o.list ? ' data-list="1"' : ""} data-ph="${esc(o.ph || "Escribe aquí")}"` : "";
+  return `<${tag} class="ed ${o.cls || ""}"${a}>${esc(v)}</${tag}>`;
+}
+const ctl = (html, cls) => editing ? `<span class="ectl${cls ? " " + cls : ""}" contenteditable="false">${html}</span>` : "";
+const ob = (op, k, label, title) => `<button type="button" class="eb" data-op="${op}" data-t="${k}"${title ? ` title="${title}" aria-label="${title}"` : ""}>${label}</button>`;
+
+function cvParts(cv){
   const L = labels();
-  const exp = (cv.experiencia||[]).map(e => `<div class="p-entry">
-      <div class="p-row"><b>${esc(e.puesto)}</b><span>${esc(e.fechas)}</span></div>
-      <div class="p-org">${esc([e.empresa, e.ubicacion].filter(Boolean).join(" · "))}</div>
-      ${(e.logros||[]).length ? `<ul>${e.logros.map(l => `<li>${esc(l)}</li>`).join("")}</ul>` : ""}
-    </div>`).join("");
-  const edu = (cv.formacion||[]).map(f => `<div class="p-entry">
-      <div class="p-row"><b>${esc(f.titulo)}</b><span>${esc(f.fechas)}</span></div>
-      <div class="p-org">${esc(f.centro)}</div>${f.detalle ? `<p>${esc(f.detalle)}</p>` : ""}
-    </div>`).join("");
-  const skills = (cv.habilidades||[]).filter(h => (h.items||[]).length).map(h => `<p><b>${esc(h.categoria)}:</b> ${esc(h.items.join(", "))}</p>`).join("");
-  const langs = (cv.idiomas||[]).length ? `<p>${cv.idiomas.map(i => `<b>${esc(i.idioma)}</b>${i.nivel ? " (" + esc(i.nivel) + ")" : ""}`).join(" · ")}</p>` : "";
-  const otros = (cv.otros||[]).filter(o => (o.items||[]).length).map(o => sec(o.titulo, `<ul>${o.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`)).join("");
-  return `<div class="paper" style="--cvc:${state.color}">
-    <div class="p-head pos-${state.photoPos}">
-      ${state.photo ? `<img class="p-photo ${state.photoShape === "circ" ? "circ" : ""}" src="${state.photo}" alt="">` : ""}
-      <div>
-        <div class="p-name">${esc(cv.nombre)}</div>
-        ${cv.titular ? `<div class="p-title">${esc(cv.titular)}</div>` : ""}
-        <div class="p-contact">${esc(contactLine(cv.contacto).join("  |  "))}</div>
-      </div>
-    </div>
-    ${sec(L.perfil, cv.perfil ? `<p>${esc(cv.perfil)}</p>` : "")}
-    ${sec(L.exp, exp)}
-    ${sec(L.edu, edu)}
-    ${sec(L.skills, skills)}
-    ${sec(L.langs, langs)}
-    ${otros}
+  const sec = (key, title, body, extra) => `<div class="p-sec"><h4>${title}${ctl(ob("delsec", key, "×", "Quitar sección"))}</h4>${body}${extra || ""}</div>`;
+  const list = (base, arr, ph) => {
+    const items = (arr || []).map((l, j) => (editing || String(l ?? "").trim()) ? `<li>${ed(`${base}.${j}`, l, {ph: ph || "Escribe un logro"})}${ctl(ob("del", `${base}.${j}`, "×", "Quitar punto"))}</li>` : "").join("");
+    return (items ? `<ul>${items}</ul>` : "") + ctl(ob("addli", base, "+ punto"));
+  };
+  const eCtl = (arr, i) => ctl((i ? ob("up", `${arr}.${i}`, "↑", "Subir") : "") + ob("del", `${arr}.${i}`, "×", "Quitar"), "ectl-e");
+
+  const ex = (cv.experiencia || []).map((e, i) => {
+    const k = `experiencia.${i}`;
+    const org = editing ? `${ed(k + ".empresa", e.empresa, {ph:"Empresa"})} · ${ed(k + ".ubicacion", e.ubicacion, {ph:"Ciudad"})}`
+                        : esc([e.empresa, e.ubicacion].filter(x => x && String(x).trim()).join(" · "));
+    return `<div class="p-entry">${eCtl("experiencia", i)}
+      <div class="p-row"><b>${ed(k + ".puesto", e.puesto, {ph:"Puesto"})}</b><span>${ed(k + ".fechas", e.fechas, {ph:"Fechas"})}</span></div>
+      ${org ? `<div class="p-org">${org}</div>` : ""}
+      ${list(k + ".logros", e.logros)}</div>`;
+  }).join("");
+  const edu = (cv.formacion || []).map((f, i) => {
+    const k = `formacion.${i}`;
+    return `<div class="p-entry">${eCtl("formacion", i)}
+      <div class="p-row"><b>${ed(k + ".titulo", f.titulo, {ph:"Título"})}</b><span>${ed(k + ".fechas", f.fechas, {ph:"Fechas"})}</span></div>
+      ${(editing || f.centro) ? `<div class="p-org">${ed(k + ".centro", f.centro, {ph:"Centro"})}</div>` : ""}
+      ${ed(k + ".detalle", f.detalle, {tag:"p", ph:"Detalle (opcional)"})}</div>`;
+  }).join("");
+  const skillRows = stack => (cv.habilidades || []).map((h, i) => {
+    if (!editing && !nz(h.items).length) return "";
+    const k = `habilidades.${i}`;
+    const cat = ed(k + ".categoria", h.categoria, {tag:"b", ph:"Categoría"});
+    const its = ed(k + ".items", nz(h.items), {list:true, ph:"habilidad, otra habilidad"});
+    const del = ctl(ob("del", k, "×", "Quitar"));
+    return stack ? `<div class="p-sk">${cat ? `<div>${cat}</div>` : ""}<div>${its}${del}</div></div>`
+                 : `<p>${cat}${cat ? "<b>: </b>" : ""}${its}${del}</p>`;
+  }).join("");
+  const langRows = stack => {
+    const rows = (cv.idiomas || []).map((l, i) => {
+      if (!editing && !String(l.idioma || "").trim()) return "";
+      const k = `idiomas.${i}`;
+      const nv = ed(k + ".nivel", l.nivel, {ph:"Nivel"});
+      return `<span class="p-lang">${ed(k + ".idioma", l.idioma, {tag:"b", ph:"Idioma"})}${nv ? (stack ? `<br>${nv}` : ` (${nv})`) : ""}${ctl(ob("del", k, "×", "Quitar"))}</span>`;
+    }).filter(Boolean);
+    return stack ? rows.join("") : rows.join(`<span class="dot"> · </span>`);
+  };
+  const add = (key, label) => ctl(ob("add", key, label));
+  const show = (has, key) => editing || has;
+
+  const contactItems = CONTACT_KEYS.map(([k]) => (cv.contacto || {})[k]).filter(x => x && String(x).trim());
+  const contactLineH = editing
+    ? CONTACT_KEYS.map(([k, ph]) => ed("contacto." + k, (cv.contacto || {})[k], {ph})).join(`<span class="csep">|</span>`)
+    : esc(contactItems.join("  |  "));
+  const contactStackH = editing
+    ? CONTACT_KEYS.map(([k, ph]) => `<div class="ci">${ed("contacto." + k, (cv.contacto || {})[k], {ph})}</div>`).join("")
+    : contactItems.map(x => `<div class="ci">${esc(x)}</div>`).join("");
+
+  const sk = skillRows(false), skS = skillRows(true), lg = langRows(false), lgS = langRows(true);
+  return {
+    contactLine: contactLineH,
+    contactStack: (editing || contactItems.length) ? `<div class="p-sec"><h4>${L.contact}</h4>${contactStackH}</div>` : "",
+    perfil: show((cv.perfil || "").trim(), "perfil") ? sec("perfil", L.perfil, ed("perfil", cv.perfil, {tag:"p", ph:"Un resumen de 2-3 líneas sobre ti"})) : "",
+    exp: show(ex, "experiencia") ? sec("experiencia", L.exp, ex, add("experiencia", "+ Añadir experiencia")) : "",
+    edu: show(edu, "formacion") ? sec("formacion", L.edu, edu, add("formacion", "+ Añadir formación")) : "",
+    skills: show(sk, "habilidades") ? sec("habilidades", L.skills, sk, add("habilidades", "+ Añadir categoría")) : "",
+    skillsStack: show(skS, "habilidades") ? sec("habilidades", L.skills, skS, add("habilidades", "+ Añadir")) : "",
+    langs: show(lg, "idiomas") ? sec("idiomas", L.langs, `<p>${lg}</p>`, add("idiomas", "+ Añadir idioma")) : "",
+    langsStack: show(lgS, "idiomas") ? sec("idiomas", L.langs, `<div class="p-langs">${lgS}</div>`, add("idiomas", "+ Añadir")) : "",
+    otros: (cv.otros || []).map((o, i) => (editing || nz(o.items).length)
+      ? sec(`otros.${i}`, ed(`otros.${i}.titulo`, o.titulo, {ph:"Título de la sección"}), list(`otros.${i}.items`, o.items, "Escribe aquí")) : "").join("")
+  };
+}
+
+function cvHTML(cv){
+  cv = cv || {};
+  const P = cvParts(cv), tpl = state.tpl || "clasica";
+  const photo = state.photo ? `<img class="p-photo ${state.photoShape === "circ" ? "circ" : ""}" src="${state.photo}" alt="">` : "";
+  const name = ed("nombre", cv.nombre, {cls:"p-name", tag:"div", ph:"Tu nombre"});
+  const title = ed("titular", cv.titular, {cls:"p-title", tag:"div", ph:"Titular profesional"});
+  const cls = `paper t-${tpl}${state.dense ? " dense" : ""}${editing ? " editing" : ""}`;
+  const addbar = editing ? `<div class="addbar">${ob("add", "otros", "+ Añadir otra sección (cursos, voluntariado, premios…)")}</div>` : "";
+  if (tpl === "moderna") return `<div class="${cls}" style="--cvc:${state.color}">
+    <aside class="p-side">${photo ? `<div class="p-ph">${photo}</div>` : ""}${P.contactStack}${P.skillsStack}${P.langsStack}</aside>
+    <div class="p-main">${name}${title}${P.perfil}${P.exp}${P.edu}${P.otros}${addbar}</div>
+  </div>`;
+  const head = `<div class="p-head pos-${state.photoPos}${photo ? "" : " nophoto"}">${photo}<div class="p-htxt">${name}${title}<div class="p-contact">${P.contactLine}</div></div></div>`;
+  return `<div class="${cls}" style="--cvc:${state.color}">
+    ${tpl === "banda" ? `<div class="p-band">${head}</div>` : head}
+    ${P.perfil}${P.exp}${P.edu}${P.skills}${P.langs}${P.otros}${addbar}
   </div>`;
 }
+
+/* path helpers for inline editing */
+const pathParts = k => k.split(".").map(p => /^\d+$/.test(p) ? +p : p);
+function getPath(o, k){ return pathParts(k).reduce((c, p) => c == null ? c : c[p], o); }
+function setPath(o, k, v){
+  const ps = pathParts(k); let cur = o;
+  for (let i = 0; i < ps.length - 1; i++){
+    if (cur[ps[i]] == null) cur[ps[i]] = typeof ps[i + 1] === "number" ? [] : {};
+    cur = cur[ps[i]];
+  }
+  cur[ps[ps.length - 1]] = v;
+}
+function parentOf(k){ const ps = pathParts(k); const last = ps.pop(); return [getPath(state.result.cv, ps.join(".")), last]; }
+const NEW_ITEM = {
+  experiencia: () => ({puesto:"", empresa:"", ubicacion:"", fechas:"", logros:[""]}),
+  formacion: () => ({titulo:"", centro:"", fechas:"", detalle:""}),
+  habilidades: () => ({categoria:"", items:[]}),
+  idiomas: () => ({idioma:"", nivel:""}),
+  otros: () => ({titulo:"", items:[""]})
+};
+const FOCUS_FIELD = {experiencia:"puesto", formacion:"titulo", habilidades:"categoria", idiomas:"idioma", otros:"titulo"};
+
+function pushUndo(){
+  const s = JSON.stringify(state.result.cv);
+  if (undoStack[undoStack.length - 1] !== s){ undoStack.push(s); if (undoStack.length > 60) undoStack.shift(); }
+  const u = $("#undoBtn"); if (u) u.disabled = false;
+}
+function focusKey(k){
+  const el = k && document.querySelector(`#paperWrap [data-k="${CSS.escape(k)}"]`);
+  if (!el) return;
+  el.focus();
+  const r = document.createRange(); r.selectNodeContents(el); r.collapse(false);
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+}
+function rerenderPaper(fk){
+  const w = $("#paperWrap"); if (!w || !state.result) return;
+  w.innerHTML = cvHTML(state.result.cv);
+  if (fk) focusKey(fk);
+  const u = $("#undoBtn"); if (u) u.disabled = !undoStack.length;
+}
+function editOp(op, k){
+  const cv = state.result.cv;
+  pushUndo();
+  let fk = null;
+  if (op === "del"){ const [arr, i] = parentOf(k); if (Array.isArray(arr)) arr.splice(i, 1); }
+  else if (op === "up"){ const [arr, i] = parentOf(k); if (Array.isArray(arr) && i > 0) [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]]; }
+  else if (op === "addli"){ let arr = getPath(cv, k); if (!Array.isArray(arr)){ arr = []; setPath(cv, k, arr); } arr.push(""); fk = `${k}.${arr.length - 1}`; }
+  else if (op === "add"){ if (!Array.isArray(cv[k])) cv[k] = []; cv[k].push(NEW_ITEM[k]()); fk = `${k}.${cv[k].length - 1}.${FOCUS_FIELD[k]}`; }
+  else if (op === "delsec"){
+    if (k === "perfil") cv.perfil = "";
+    else if (k.startsWith("otros.")){ const [arr, i] = parentOf(k); arr.splice(i, 1); }
+    else cv[k] = [];
+  }
+  rerenderPaper(fk);
+  persistSoon();
+}
+function readField(el){
+  const t = el.textContent.replace(/\s*\n\s*/g, " ").replace(/ /g, " ");
+  return el.dataset.list ? t.split(",").map(s => s.trim()).filter(Boolean) : t.trim();
+}
+function bindEditor(){
+  const w = $("#paperWrap"); if (!w) return;
+  w.addEventListener("focusin", e => { if (e.target.dataset && e.target.dataset.k) pushUndo(); });
+  w.addEventListener("input", e => {
+    const el = e.target; if (!el.dataset || !el.dataset.k) return;
+    setPath(state.result.cv, el.dataset.k, readField(el));
+    persistSoon();
+  });
+  w.addEventListener("paste", e => {
+    if (!e.target.closest || !e.target.closest("[data-k]")) return;
+    e.preventDefault();
+    const t = (e.clipboardData || window.clipboardData).getData("text").replace(/\s*\n\s*/g, " ");
+    document.execCommand("insertText", false, t);
+  });
+  w.addEventListener("keydown", e => {
+    const el = e.target; if (!el.dataset || !el.dataset.k) return;
+    const k = el.dataset.k, isLi = /\.(logros|items)\.\d+$/.test(k);
+    if (e.key === "Enter"){
+      e.preventDefault();
+      if (isLi){
+        setPath(state.result.cv, k, readField(el));
+        pushUndo();
+        const [arr, i] = parentOf(k); arr.splice(i + 1, 0, "");
+        const base = k.replace(/\.\d+$/, "");
+        rerenderPaper(`${base}.${i + 1}`); persistSoon();
+      } else el.blur();
+    } else if (e.key === "Backspace" && isLi && !el.textContent.trim()){
+      e.preventDefault();
+      pushUndo();
+      const [arr, i] = parentOf(k); arr.splice(i, 1);
+      const base = k.replace(/\.\d+$/, "");
+      rerenderPaper(i > 0 ? `${base}.${i - 1}` : null); persistSoon();
+    }
+  });
+  w.addEventListener("click", e => {
+    const b = e.target.closest(".eb"); if (!b) return;
+    e.preventDefault();
+    editOp(b.dataset.op, b.dataset.t);
+  });
+}
+function setEditing(on){
+  editing = !!on;
+  const b = $("#editBtn");
+  if (b){ b.textContent = editing ? "✓ Terminar de editar" : "✏️ Editar texto"; b.classList.toggle("btn-primary", editing); b.classList.toggle("btn-ghost", !editing); }
+  const h = $("#edHint"); if (h) h.textContent = editing ? "Haz clic en cualquier texto del CV y escribe. Enter en un punto crea otro debajo." : "Puedes cambiar cualquier texto a mano, gratis y sin anuncios.";
+  rerenderPaper();
+  if (!editing) persistNow();
+}
+
+/* keep a saved CV in sync with edits and design changes */
+let persistT = null;
+function canPersist(){ return state.savedId && !isAnon() && !state.isExample && sb; }
+function persistSoon(){ if (!canPersist()) return; clearTimeout(persistT); persistT = setTimeout(persistNow, 1500); }
+async function persistNow(){
+  clearTimeout(persistT);
+  if (!canPersist()) return;
+  try {
+    const {data: row} = await sb.from("cvs").select("data").eq("id", state.savedId).single();
+    if (!row) return;
+    const d = Object.assign(row.data || {}, {
+      result: state.result, photo: state.photo, photoPos: state.photoPos, photoShape: state.photoShape,
+      color: state.color, tpl: state.tpl, dense: state.dense
+    });
+    await sb.from("cvs").update({data: d}).eq("id", state.savedId);
+  } catch(e){}
+}
+
 function labels(){
   const cv = (state.result && state.result.cv) || {};
   // detect English output by headline/profile heuristics
   const sample = ((cv.perfil||"") + " " + (cv.titular||"")).toLowerCase();
   const en = $("#lang").value === "inglés" || (/\b(the|and|with|experience|skills)\b/.test(sample) && !/\b(con|y|experiencia|de la)\b/.test(sample));
-  return en ? {perfil:"Profile", exp:"Experience", edu:"Education", skills:"Skills", langs:"Languages"}
-            : {perfil:"Perfil", exp:"Experiencia", edu:"Formación", skills:"Habilidades", langs:"Idiomas"};
+  return en ? {perfil:"Profile", exp:"Experience", edu:"Education", skills:"Skills", langs:"Languages", contact:"Contact"}
+            : {perfil:"Perfil", exp:"Experiencia", edu:"Formación", skills:"Habilidades", langs:"Idiomas", contact:"Contacto"};
 }
 
 function render(){
@@ -1448,35 +1721,68 @@ function render(){
     </div>`)}
 
     <div class="cv-area">
-      <div class="paper-wrap" id="paperWrap">${cvHTML(r.cv)}</div>
+      <div class="cv-col">
+        <div class="edbar">
+          <button class="btn ${editing ? "btn-primary" : "btn-ghost"}" id="editBtn">${editing ? "✓ Terminar de editar" : "✏️ Editar texto"}</button>
+          <button class="btn btn-ghost" id="undoBtn" ${undoStack.length ? "" : "disabled"}>↶ Deshacer</button>
+          <span class="note" id="edHint">${editing ? "Haz clic en cualquier texto del CV y escribe. Enter en un punto crea otro debajo." : "Puedes cambiar cualquier texto a mano, gratis y sin anuncios."}</span>
+        </div>
+        <div class="paper-wrap" id="paperWrap">${cvHTML(r.cv)}</div>
+      </div>
       <aside class="side">
         <div class="card">
-          <h3>Descargar CV</h3>
+          <h3>Diseño</h3>
+          <div class="field"><span class="lbl">Plantilla</span>
+            <div class="tpls">${TPLS.map(([v, t]) => `<button type="button" class="tplbtn" data-tpl="${v}" aria-pressed="${v === state.tpl}"><span class="tpl-mini m-${v}"><i></i><i></i><i></i></span>${t}</button>`).join("")}</div>
+          </div>
           <div class="field"><span class="lbl">Color</span>
             <div class="swatches">${CV_COLORS.map(c => `<button class="sw" style="background:${c.hex}" data-c="${c.hex}" aria-label="Color ${c.name}" aria-pressed="${c.hex===state.color}"></button>`).join("")}</div>
           </div>
-          <div class="photo-box" id="photoCtlSide" style="border-top:0;padding-top:0"></div>
+          <div class="field"><span class="lbl">Tamaño de letra</span>
+            <div class="seg" role="group"><button type="button" data-dense="0" aria-pressed="${!state.dense}">Normal</button><button type="button" data-dense="1" aria-pressed="${!!state.dense}">Compacto</button></div>
+          </div>
+          <div class="photo-box" id="photoCtlSide"></div>
+        </div>
+        <div class="card">
+          <h3>Descargar CV</h3>
           <div class="dl">
             <button class="btn btn-tape" id="dlPdf">Descargar PDF</button>
             <button class="btn btn-ghost" id="dlDocx">Descargar Word (.docx)</button>
             <button class="btn btn-ghost" id="copyTxt">Copiar como texto</button>
           </div>
-          <p class="note">El Word lo puedes retocar antes de enviarlo.</p>
+          <p class="note">Se descarga con la plantilla, el color y los cambios que hayas hecho.</p>
         </div>
         <div class="card">
-          <h3>Pedir cambios</h3>
+          <h3>Pedir cambios a la IA</h3>
           <textarea id="refineText" style="min-height:80px" placeholder="Ej.: hazlo más corto, quita las prácticas de 2021, pon el perfil en tono más directo"></textarea>
           <button class="btn btn-ghost" id="refineBtn">Aplicar cambios</button>
-          <p class="note">Cada cambio incluye un anuncio corto.</p>
+          <p class="note">Cada cambio con IA incluye un anuncio corto. Los retoques a mano con "Editar texto" son gratis.</p>
         </div>
       </aside>
     </div>`;
 
   refreshPhotoUI();
+  bindEditor();
+  $("#editBtn").addEventListener("click", () => setEditing(!editing));
+  $("#undoBtn").addEventListener("click", () => {
+    if (!undoStack.length) return;
+    state.result.cv = JSON.parse(undoStack.pop());
+    rerenderPaper(); persistSoon();
+  });
+  document.querySelectorAll(".tplbtn").forEach(b => b.addEventListener("click", () => {
+    state.tpl = b.dataset.tpl;
+    document.querySelectorAll(".tplbtn").forEach(x => x.setAttribute("aria-pressed", x === b));
+    refreshPhotoUI(); persistSoon();
+  }));
+  document.querySelectorAll("[data-dense]").forEach(b => b.addEventListener("click", () => {
+    state.dense = b.dataset.dense === "1";
+    document.querySelectorAll("[data-dense]").forEach(x => x.setAttribute("aria-pressed", x === b));
+    rerenderPaper(); persistSoon();
+  }));
   document.querySelectorAll(".sw").forEach(b => b.addEventListener("click", () => {
     state.color = b.dataset.c;
     document.querySelectorAll(".sw").forEach(x => x.setAttribute("aria-pressed", x === b));
-    $("#paperWrap").innerHTML = cvHTML(state.result.cv);
+    rerenderPaper(); persistSoon();
   }));
   if ($("#saveSignup")) $("#saveSignup").addEventListener("click", () => openAuth("signup"));
   if ($("#ivBtn")) $("#ivBtn").addEventListener("click", runInterview);
@@ -1502,199 +1808,356 @@ async function buildPDF(){
   const photoImg = state.photo ? await exportPhoto(state.photoShape).catch(() => null) : null;
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:"mm", format:"a4"});
-  const cv = state.result.cv, L = labels();
-  const W = 210, H = 297, M = 17, CW = W - 2*M;
+  const cv = state.result.cv, L = labels(), tpl = state.tpl || "clasica", K = state.dense ? 0.92 : 1;
+  const W = 210, H = 297, M = state.dense ? 14 : 17, PT = 0.3528;
   const acc = hexToRgb(state.color), ink = [24,30,40], gray = [95,105,118];
-  const PT = 0.3528;
-  let y = M;
-  const ensure = h => { if (y + h > H - M){ doc.addPage(); y = M; } };
-  function font(size, style, color){ doc.setFont("helvetica", style||"normal"); doc.setFontSize(size); doc.setTextColor(...(color||ink)); }
+  const mix = (a, t) => a.map(c => Math.round(c * t + 255 * (1 - t)));
+  const tint = mix(acc, 0.1), soft = mix(acc, 0.18);
+  const FAM = tpl === "minimal" ? "times" : "helvetica";
+  const SW = 68;
+  const deco = () => { if (tpl === "moderna"){ doc.setFillColor(...tint); doc.rect(0, 0, SW, H, "F"); } };
+  deco();
+  let C = {x: M, w: W - 2*M, y: M, page: 1};
+  const goPage = p => { while (doc.getNumberOfPages() < p){ doc.addPage(); deco(); } doc.setPage(p); };
+  const ensure = h => { if (C.y + h > H - M){ C.page++; C.y = M; } goPage(C.page); };
+  const font = (size, style, color) => { doc.setFont(FAM, style || "normal"); doc.setFontSize(size * K); doc.setTextColor(...(color || ink)); };
+  const lhOf = (size, lh) => size * K * PT * (lh || 1.32);
+
   function para(text, o){
-    o = Object.assign({size:10, style:"normal", color:ink, indent:0, lh:1.32, width:CW, center:false}, o||{});
+    o = Object.assign({size:10, style:"normal", color:ink, indent:0, lh:1.32, width:C.w, center:false}, o || {});
     font(o.size, o.style, o.color);
     const lines = doc.splitTextToSize(pdfSafe(text), o.width - o.indent);
-    const lh = o.size * PT * o.lh;
+    const lh = lhOf(o.size, o.lh);
     lines.forEach(ln => {
       ensure(lh);
-      if (o.center) doc.text(ln, W / 2, y, {baseline:"top", align:"center"});
-      else doc.text(ln, M + o.indent, y, {baseline:"top"});
-      y += lh;
+      if (o.center) doc.text(ln, C.x + o.width / 2, C.y, {baseline:"top", align:"center"});
+      else doc.text(ln, C.x + o.indent, C.y, {baseline:"top"});
+      C.y += lh;
     });
   }
   function bullet(text){
-    const size = 10, lh = size*PT*1.32;
+    const size = 10, lh = lhOf(size);
     font(size, "normal", ink);
-    const lines = doc.splitTextToSize(pdfSafe(text), CW - 4.5);
+    const lines = doc.splitTextToSize(pdfSafe(text), C.w - 4.5);
     lines.forEach((ln, i) => {
       ensure(lh);
-      if (i === 0){ doc.setFillColor(...acc); doc.circle(M + 1.3, y + lh*0.42, 0.55, "F"); }
-      doc.text(ln, M + 4.5, y, {baseline:"top"}); y += lh;
+      if (i === 0){ doc.setFillColor(...acc); doc.circle(C.x + 1.3, C.y + lh*0.42, 0.55, "F"); }
+      doc.text(ln, C.x + 4.5, C.y, {baseline:"top"}); C.y += lh;
     });
-    y += 0.4;
+    C.y += 0.4;
   }
-  function heading(t){
-    y += 3.6; ensure(12);
-    font(10.5, "bold", acc);
-    doc.text(pdfSafe(t).toUpperCase(), M, y, {baseline:"top", charSpace:0.4});
-    y += 5;
-    doc.setDrawColor(...acc); doc.setLineWidth(0.35); doc.line(M, y, W - M, y);
-    y += 2.6;
+  function heading(t, side){
+    C.y += (side ? 2.6 : 3.6) * K; ensure(12);
+    const T = pdfSafe(t).toUpperCase();
+    if (tpl === "minimal"){
+      font(9.5, "bold", ink); doc.text(T, C.x, C.y, {baseline:"top", charSpace:1});
+      C.y += 4.8 * K; doc.setDrawColor(205,210,216); doc.setLineWidth(0.2); doc.line(C.x, C.y, C.x + C.w, C.y); C.y += 2.6; return;
+    }
+    if (tpl === "banda"){
+      font(10.5, "bold", acc); doc.setFillColor(...acc); doc.rect(C.x, C.y - 0.3, 1.1, 4.6 * K, "F");
+      doc.text(T, C.x + 3.4, C.y, {baseline:"top", charSpace:0.4}); C.y += 7 * K; return;
+    }
+    font(side ? 9.5 : 10.5, "bold", acc);
+    doc.text(T, C.x, C.y, {baseline:"top", charSpace:0.4});
+    C.y += (side ? 4.5 : 5) * K;
+    doc.setDrawColor(...acc); doc.setLineWidth(side ? 0.25 : 0.35); doc.line(C.x, C.y, C.x + C.w, C.y);
+    C.y += 2.6;
   }
   function entryHead(left, right, sub){
     ensure(12);
     font(9.5, "normal", gray);
     const rw = right ? doc.getTextWidth(pdfSafe(right)) : 0;
-    if (right) doc.text(pdfSafe(right), W - M, y + 0.3, {baseline:"top", align:"right"});
-    para(left, {size:10.5, style:"bold", width: CW - rw - 4});
+    if (right) doc.text(pdfSafe(right), C.x + C.w, C.y + 0.3, {baseline:"top", align:"right"});
+    para(left || "", {size:10.5, style:"bold", width: C.w - rw - 4});
     if (sub) para(sub, {size:9.8, style:"italic", color:gray});
-    y += 0.8;
+    C.y += 0.8;
+  }
+  function headBlock(o){
+    const base = {indent: o.indent || 0, width: o.width || C.w, center: !!o.center};
+    const nm = tpl === "minimal" ? {size:24, style:"normal"} : {size:22, style:"bold"};
+    para(cv.nombre || "", {...base, ...nm, lh:1.15, color: o.nameColor || ink});
+    if (cv.titular){ C.y += 0.6; para(cv.titular, {...base, size:11.5, style:"bold", color: o.titleColor || acc}); }
+    const cl = contactLine(cv.contacto);
+    if (cl.length){ C.y += 1; para(cl.join("   |   "), {...base, size:9, color: o.contactColor || gray}); }
+  }
+  function headHeight(width){
+    const m = (t, size, style, lh) => { font(size, style); return doc.splitTextToSize(pdfSafe(t), width).length * lhOf(size, lh); };
+    let h = m(cv.nombre || "", 22, "bold", 1.15);
+    if (cv.titular) h += 0.6 + m(cv.titular, 11.5, "bold");
+    const cl = contactLine(cv.contacto); if (cl.length) h += 1 + m(cl.join("   |   "), 9, "normal");
+    return h;
+  }
+  const skillsList = () => (cv.habilidades || []).map(h => ({categoria: String(h.categoria || "").trim(), items: nz(h.items)})).filter(h => h.items.length);
+  const langsList = () => (cv.idiomas || []).filter(i => String(i.idioma || "").trim());
+
+  function bodyMain(){
+    if (String(cv.perfil || "").trim()){ heading(L.perfil); para(cv.perfil); }
+    const ex = (cv.experiencia || []).filter(e => e.puesto || e.empresa || nz(e.logros).length);
+    if (ex.length){
+      heading(L.exp);
+      ex.forEach((e, i) => {
+        if (i) C.y += 2.2 * K;
+        entryHead(e.puesto, e.fechas, [e.empresa, e.ubicacion].filter(Boolean).join(" · "));
+        nz(e.logros).forEach(bullet);
+      });
+    }
+    const fo = (cv.formacion || []).filter(f => f.titulo || f.centro);
+    if (fo.length){
+      heading(L.edu);
+      fo.forEach((f, i) => {
+        if (i) C.y += 2 * K;
+        entryHead(f.titulo, f.fechas, f.centro);
+        if (f.detalle) para(f.detalle, {size:9.8});
+      });
+    }
+  }
+  function bodySkillsInline(){
+    const sk = skillsList();
+    if (sk.length){
+      heading(L.skills);
+      sk.forEach(h => {
+        const label = pdfSafe(h.categoria ? h.categoria + ": " : "");
+        font(10, "bold", ink);
+        const lw = doc.getTextWidth(label);
+        const rest = doc.splitTextToSize(pdfSafe(h.items.join(", ")), C.w - lw);
+        const lh = lhOf(10);
+        ensure(lh);
+        doc.text(label, C.x, C.y, {baseline:"top"});
+        font(10, "normal", ink);
+        doc.text(rest[0] || "", C.x + lw, C.y, {baseline:"top"}); C.y += lh;
+        if (rest.length > 1) para(rest.slice(1).join(" "));
+        C.y += 0.6;
+      });
+    }
+    const lg = langsList();
+    if (lg.length){ heading(L.langs); para(lg.map(i => i.idioma + (i.nivel ? " (" + i.nivel + ")" : "")).join("   ·   ")); }
+  }
+  function bodyOtros(){
+    (cv.otros || []).filter(o => nz(o.items).length).forEach(o => { heading(o.titulo || ""); nz(o.items).forEach(bullet); });
   }
 
-  // header: photo left, right or centred on top
-  let hi = 0, hw = CW, center = false, photoBottom = 0;
-  if (photoImg){
-    const PW = photoImg.ratio === 1 ? 30 : 26, PH = PW * photoImg.ratio;
-    try {
-      if (state.photoPos === "centro"){
-        doc.addImage(photoImg.data, photoImg.fmt, (W - PW) / 2, y, PW, PH);
-        y += PH + 4; center = true;
-      } else if (state.photoPos === "derecha"){
-        doc.addImage(photoImg.data, photoImg.fmt, W - M - PW, y, PW, PH);
-        hw = CW - PW - 6; photoBottom = y + PH; y += PH > 32 ? 5 : 3;
-      } else {
-        doc.addImage(photoImg.data, photoImg.fmt, M, y, PW, PH);
-        hi = PW + 6; photoBottom = y + PH; y += PH > 32 ? 5 : 3;
+  if (tpl === "moderna"){
+    C = {x: 8, w: SW - 16, y: M, page: 1};
+    if (photoImg){
+      const PW = photoImg.ratio === 1 ? 36 : 32, PH = PW * photoImg.ratio;
+      try { doc.addImage(photoImg.data, photoImg.fmt, (SW - PW) / 2, C.y, PW, PH); } catch(e){}
+      C.y += PH + 3;
+    }
+    const cl = contactLine(cv.contacto);
+    if (cl.length){ heading(L.contact, true); cl.forEach(x => { para(x, {size:8.8}); C.y += 0.9; }); }
+    const sk = skillsList();
+    if (sk.length){ heading(L.skills, true); sk.forEach(h => { if (h.categoria) para(h.categoria, {size:9.2, style:"bold"}); para(h.items.join(", "), {size:8.8}); C.y += 1.6; }); }
+    const lg = langsList();
+    if (lg.length){ heading(L.langs, true); lg.forEach(i => { para(i.idioma, {size:9.2, style:"bold"}); if (i.nivel) para(i.nivel, {size:8.8, color:gray}); C.y += 1.2; }); }
+    C = {x: SW + 9, w: W - SW - 9 - M, y: M, page: 1};
+    goPage(1);
+    para(cv.nombre || "", {size:22, style:"bold", lh:1.15});
+    if (cv.titular){ C.y += 0.6; para(cv.titular, {size:11.5, style:"bold", color:acc}); }
+    C.y += 1;
+    bodyMain(); bodyOtros();
+  } else {
+    const pos = state.photoPos;
+    if (tpl === "banda"){
+      const PAD = 9;
+      const PW = photoImg ? (photoImg.ratio === 1 ? 28 : 24) : 0, PH = photoImg ? PW * photoImg.ratio : 0;
+      const centerB = !!photoImg && pos === "centro";
+      const tw = photoImg && !centerB ? C.w - PW - 6 : C.w;
+      const th = headHeight(tw);
+      const inner = centerB ? PH + 4 + th : Math.max(th, PH);
+      doc.setFillColor(...acc); doc.rect(0, 0, W, inner + PAD * 2, "F");
+      let ty = PAD;
+      if (photoImg){
+        const px = centerB ? (W - PW) / 2 : pos === "derecha" ? W - M - PW : M;
+        const py = centerB ? PAD : PAD + (inner - PH) / 2;
+        try { doc.addImage(photoImg.data, photoImg.fmt, px, py, PW, PH); } catch(e){}
+        ty = centerB ? PAD + PH + 4 : PAD + (inner - th) / 2;
       }
-    } catch(e){}
+      C.y = ty;
+      const light = mix([255,255,255], 1), soft2 = acc.map(c => Math.round(c * 0.15 + 255 * 0.85));
+      headBlock({
+        indent: photoImg && !centerB && pos !== "derecha" ? PW + 6 : 0,
+        width: photoImg && !centerB && pos === "derecha" ? C.w - PW - 6 : C.w,
+        center: centerB, nameColor: light, titleColor: soft2, contactColor: soft2
+      });
+      C.y = inner + PAD * 2 + 3;
+    } else {
+      const centerAll = tpl === "minimal" && !photoImg;
+      let hi = 0, hw = C.w, center = centerAll, photoBottom = 0;
+      if (photoImg){
+        const PW = photoImg.ratio === 1 ? 30 : 26, PH = PW * photoImg.ratio;
+        try {
+          if (pos === "centro"){
+            doc.addImage(photoImg.data, photoImg.fmt, (W - PW) / 2, C.y, PW, PH);
+            C.y += PH + 4; center = true;
+          } else if (pos === "derecha"){
+            doc.addImage(photoImg.data, photoImg.fmt, W - M - PW, C.y, PW, PH);
+            hw = C.w - PW - 6; photoBottom = C.y + PH; C.y += PH > 32 ? 5 : 3;
+          } else {
+            doc.addImage(photoImg.data, photoImg.fmt, M, C.y, PW, PH);
+            hi = PW + 6; photoBottom = C.y + PH; C.y += PH > 32 ? 5 : 3;
+          }
+        } catch(e){}
+      }
+      headBlock({indent: hi, width: hw, center});
+      if (photoBottom) C.y = Math.max(C.y, photoBottom);
+      if (tpl === "minimal"){ C.y += 2; }
+    }
+    bodyMain(); bodySkillsInline(); bodyOtros();
   }
-  para(cv.nombre || "", {size:22, style:"bold", lh:1.15, indent:hi, width:hw, center});
-  if (cv.titular){ y += 0.6; para(cv.titular, {size:11.5, style:"bold", color:acc, indent:hi, width:hw, center}); }
-  const cl = contactLine(cv.contacto);
-  if (cl.length){ y += 1; para(cl.join("   |   "), {size:9, color:gray, indent:hi, width:hw, center}); }
-  if (photoBottom) y = Math.max(y, photoBottom);
-
-  if (cv.perfil){ heading(L.perfil); para(cv.perfil); }
-  if ((cv.experiencia||[]).length){
-    heading(L.exp);
-    cv.experiencia.forEach((e, i) => {
-      if (i) y += 2.2;
-      entryHead(e.puesto, e.fechas, [e.empresa, e.ubicacion].filter(Boolean).join(" · "));
-      (e.logros||[]).forEach(bullet);
-    });
-  }
-  if ((cv.formacion||[]).length){
-    heading(L.edu);
-    cv.formacion.forEach((f, i) => {
-      if (i) y += 2;
-      entryHead(f.titulo, f.fechas, f.centro);
-      if (f.detalle) para(f.detalle, {size:9.8});
-    });
-  }
-  const sk = (cv.habilidades||[]).filter(h => (h.items||[]).length);
-  if (sk.length){
-    heading(L.skills);
-    sk.forEach(h => {
-      const label = pdfSafe(h.categoria ? h.categoria + ": " : "");
-      font(10, "bold", ink);
-      const lw = doc.getTextWidth(label);
-      const rest = doc.splitTextToSize(pdfSafe(h.items.join(", ")), CW - lw);
-      const lh = 10*PT*1.32;
-      ensure(lh);
-      doc.text(label, M, y, {baseline:"top"});
-      font(10, "normal", ink);
-      doc.text(rest[0] || "", M + lw, y, {baseline:"top"}); y += lh;
-      if (rest.length > 1) para(rest.slice(1).join(" "));
-      y += 0.6;
-    });
-  }
-  if ((cv.idiomas||[]).length){
-    heading(L.langs);
-    para(cv.idiomas.map(i => i.idioma + (i.nivel ? " (" + i.nivel + ")" : "")).join("   ·   "));
-  }
-  (cv.otros||[]).filter(o => (o.items||[]).length).forEach(o => { heading(o.titulo); o.items.forEach(bullet); });
-
   return doc.output("blob");
 }
 
 async function buildDOCX(){
   const D = window.docx;
-  const cv = state.result.cv, L = labels();
+  const cv = state.result.cv, L = labels(), tpl = state.tpl || "clasica", K = state.dense ? 0.92 : 1;
   const acc = state.color.slice(1).toUpperCase();
-  const GRAY = "5F6976";
-  const kids = [];
+  const hex = a => a.map(c => c.toString(16).padStart(2, "0")).join("").toUpperCase();
+  const accRgb = hexToRgb(state.color);
+  const TINT = hex(accRgb.map(c => Math.round(c * 0.1 + 255 * 0.9)));
+  const SOFT = hex(accRgb.map(c => Math.round(c * 0.15 + 255 * 0.85)));
+  const GRAY = "5F6976", INK = "121821";
+  const FONT = tpl === "minimal" ? "Georgia" : "Calibri";
+  const sz = n => Math.round(n * K);
   const P = (o) => new D.Paragraph(o);
-  const R = (text, o) => new D.TextRun(Object.assign({text: String(text ?? "")}, o||{}));
-  const right = {tabStops:[{type: D.TabStopType.RIGHT, position: D.TabStopPosition.MAX}]};
-  const tabRun = (text, o) => D.Tab ? new D.TextRun(Object.assign({children:[new D.Tab(), String(text||"")]}, o||{})) : R("\t" + (text||""), o);
+  const R = (text, o) => new D.TextRun(Object.assign({text: String(text ?? "")}, o || {}));
+  const none = {style: D.BorderStyle.NONE, size: 0, color: "FFFFFF"};
+  const cb = {top: none, bottom: none, left: none, right: none};
+  const noTbl = {top: none, bottom: none, left: none, right: none, insideHorizontal: none, insideVertical: none};
+  const tabRun = (text, o) => D.Tab ? new D.TextRun(Object.assign({children:[new D.Tab(), String(text || "")]}, o || {})) : R("\t" + (text || ""), o);
 
   const photoImg = state.photo && D.ImageRun ? await exportPhoto(state.photoShape).catch(() => null) : null;
-  const pos = state.photoPos;
-  const align = photoImg && pos === "centro" ? D.AlignmentType.CENTER : undefined;
-  const head = [P({alignment: align, children:[R(cv.nombre, {bold:true, size:44, color:"121821"})], spacing:{after:40}})];
-  if (cv.titular) head.push(P({alignment: align, children:[R(cv.titular, {bold:true, size:24, color:acc})], spacing:{after:60}}));
-  const cl = contactLine(cv.contacto);
-  if (cl.length) head.push(P({alignment: align, children:[R(cl.join("   |   "), {size:18, color:GRAY})], spacing:{after:80}}));
-  if (photoImg){
-    const bytes = Uint8Array.from(atob(photoImg.data.split(",")[1]), c => c.charCodeAt(0));
-    const pw = photoImg.ratio === 1 ? 108 : 92, ph = Math.round(pw * photoImg.ratio);
-    const imgPara = a => P({alignment: a, children: [new D.ImageRun({data: bytes, transformation: {width: pw, height: ph}})]});
-    if (pos === "centro" || !D.Table){
-      kids.push(imgPara(D.AlignmentType.CENTER), ...head);
-    } else {
-      const none = {style: D.BorderStyle.NONE, size: 0, color: "FFFFFF"};
-      const cb = {top: none, bottom: none, left: none, right: none};
-      const photoCell = new D.TableCell({borders: cb, width: {size: 1900, type: D.WidthType.DXA}, verticalAlign: D.VerticalAlign.CENTER,
-        children: [imgPara(pos === "derecha" ? D.AlignmentType.RIGHT : D.AlignmentType.LEFT)]});
-      const textCell = new D.TableCell({borders: cb, verticalAlign: D.VerticalAlign.CENTER,
-        margins: pos === "derecha" ? {right: 200} : {left: 200}, children: head});
-      kids.push(new D.Table({
-        width: {size: 100, type: D.WidthType.PERCENTAGE},
-        borders: {top: none, bottom: none, left: none, right: none, insideHorizontal: none, insideVertical: none},
-        rows: [new D.TableRow({children: pos === "derecha" ? [textCell, photoCell] : [photoCell, textCell]})]
-      }));
-    }
-  } else {
-    kids.push(...head);
-  }
-
-  const heading = t => kids.push(P({
-    children:[R(String(t).toUpperCase(), {bold:true, size:21, color:acc, characterSpacing:20})],
-    spacing:{before:240, after:100},
-    border:{bottom:{color:acc, space:2, style:D.BorderStyle.SINGLE, size:8}}
-  }));
-  const bullet = t => kids.push(P({children:[R(t)], bullet:{level:0}, spacing:{after:30}}));
-  const entry = (left, rightTxt, sub) => {
-    kids.push(P({...right, children:[R(left, {bold:true, size:22}), tabRun(rightTxt, {size:19, color:GRAY})], spacing:{before:120, after:10}, keepNext:true}));
-    if (sub) kids.push(P({children:[R(sub, {italics:true, size:20, color:"47515E"})], spacing:{after:40}, keepNext:true}));
+  const bytes = photoImg ? Uint8Array.from(atob(photoImg.data.split(",")[1]), c => c.charCodeAt(0)) : null;
+  const imgPara = (a, pw) => {
+    pw = pw || (photoImg.ratio === 1 ? 108 : 92);
+    return P({alignment: a, children: [new D.ImageRun({type: photoImg.fmt === "PNG" ? "png" : "jpg", data: bytes, transformation: {width: pw, height: Math.round(pw * photoImg.ratio)}})]});
   };
 
-  if (cv.perfil){ heading(L.perfil); kids.push(P({children:[R(cv.perfil)]})); }
-  if ((cv.experiencia||[]).length){
-    heading(L.exp);
-    cv.experiencia.forEach(e => { entry(e.puesto, e.fechas, [e.empresa, e.ubicacion].filter(Boolean).join(" · ")); (e.logros||[]).forEach(bullet); });
+  function writer(out, rightPos){
+    const right = {tabStops: [{type: D.TabStopType.RIGHT, position: rightPos || D.TabStopPosition.MAX}]};
+    return {
+      heading(t, side){
+        let o;
+        if (tpl === "minimal") o = {children:[R(String(t).toUpperCase(), {bold:true, size:sz(19), color:INK, characterSpacing:60})],
+          spacing:{before:260, after:110}, border:{bottom:{color:"D5DAE0", space:3, style:D.BorderStyle.SINGLE, size:4}}};
+        else if (tpl === "banda") o = {children:[R(String(t).toUpperCase(), {bold:true, size:sz(21), color:acc, characterSpacing:20})],
+          spacing:{before:240, after:100}, indent:{left:120}, border:{left:{color:acc, space:6, style:D.BorderStyle.SINGLE, size:18}}};
+        else o = {children:[R(String(t).toUpperCase(), {bold:true, size:sz(side ? 19 : 21), color:acc, characterSpacing:20})],
+          spacing:{before: side ? 200 : 240, after:100}, border:{bottom:{color:acc, space:2, style:D.BorderStyle.SINGLE, size: side ? 6 : 8}}};
+        out.push(P({...o, keepNext:true}));
+      },
+      text(t, o){ out.push(P({children:[R(t, o)], spacing:{after: (o && o.after) ?? 0}})); },
+      bullet(t){ out.push(P({children:[R(t)], bullet:{level:0}, spacing:{after:30}})); },
+      entry(left, rightTxt, sub){
+        out.push(P({...right, children:[R(left, {bold:true, size:sz(22)}), tabRun(rightTxt, {size:sz(19), color:GRAY})], spacing:{before:120, after:10}, keepNext:true}));
+        if (sub) out.push(P({children:[R(sub, {italics:true, size:sz(20), color:"47515E"})], spacing:{after:40}, keepNext:true}));
+      }
+    };
   }
-  if ((cv.formacion||[]).length){
-    heading(L.edu);
-    cv.formacion.forEach(f => { entry(f.titulo, f.fechas, f.centro); if (f.detalle) kids.push(P({children:[R(f.detalle, {size:20})]})); });
+  const skillsList = () => (cv.habilidades || []).map(h => ({categoria: String(h.categoria || "").trim(), items: nz(h.items)})).filter(h => h.items.length);
+  const langsList = () => (cv.idiomas || []).filter(i => String(i.idioma || "").trim());
+
+  function bodyMain(w){
+    if (String(cv.perfil || "").trim()){ w.heading(L.perfil); w.text(cv.perfil); }
+    const ex = (cv.experiencia || []).filter(e => e.puesto || e.empresa || nz(e.logros).length);
+    if (ex.length){ w.heading(L.exp); ex.forEach(e => { w.entry(e.puesto, e.fechas, [e.empresa, e.ubicacion].filter(Boolean).join(" · ")); nz(e.logros).forEach(w.bullet); }); }
+    const fo = (cv.formacion || []).filter(f => f.titulo || f.centro);
+    if (fo.length){ w.heading(L.edu); fo.forEach(f => { w.entry(f.titulo, f.fechas, f.centro); if (f.detalle) w.text(f.detalle, {size:sz(20)}); }); }
   }
-  const sk = (cv.habilidades||[]).filter(h => (h.items||[]).length);
-  if (sk.length){
-    heading(L.skills);
-    sk.forEach(h => kids.push(P({children:[R(h.categoria ? h.categoria + ": " : "", {bold:true}), R(h.items.join(", "))], spacing:{after:40}})));
+  function bodyOtros(w){ (cv.otros || []).filter(o => nz(o.items).length).forEach(o => { w.heading(o.titulo || ""); nz(o.items).forEach(w.bullet); }); }
+  function bodySkillsInline(out, w){
+    const sk = skillsList();
+    if (sk.length){ w.heading(L.skills); sk.forEach(h => out.push(P({children:[R(h.categoria ? h.categoria + ": " : "", {bold:true}), R(h.items.join(", "))], spacing:{after:40}}))); }
+    const lg = langsList();
+    if (lg.length){
+      w.heading(L.langs);
+      const runs = [];
+      lg.forEach((i, k) => { if (k) runs.push(R("   ·   ", {color:GRAY})); runs.push(R(i.idioma, {bold:true})); if (i.nivel) runs.push(R(" (" + i.nivel + ")")); });
+      out.push(P({children: runs}));
+    }
   }
-  if ((cv.idiomas||[]).length){
-    heading(L.langs);
-    const runs = [];
-    cv.idiomas.forEach((i, k) => { if (k) runs.push(R("   ·   ", {color:GRAY})); runs.push(R(i.idioma, {bold:true})); if (i.nivel) runs.push(R(" (" + i.nivel + ")")); });
-    kids.push(P({children: runs}));
+  function headParas(o){
+    const a = o.center ? D.AlignmentType.CENTER : undefined;
+    const h = [P({alignment: a, children:[R(cv.nombre, {bold: tpl !== "minimal", size: tpl === "minimal" ? 48 : 44, color: o.nameColor || INK})], spacing:{after:40}})];
+    if (cv.titular) h.push(P({alignment: a, children:[R(cv.titular, {bold:true, size:24, color: o.titleColor || acc})], spacing:{after:60}}));
+    const cl = contactLine(cv.contacto);
+    if (cl.length) h.push(P({alignment: a, children:[R(cl.join("   |   "), {size:18, color: o.contactColor || GRAY})], spacing:{after: o.after ?? 80}}));
+    return h;
   }
-  (cv.otros||[]).filter(o => (o.items||[]).length).forEach(o => { heading(o.titulo); o.items.forEach(bullet); });
+
+  const kids = [];
+  let margins = {top: 900, bottom: 900, left: 1000, right: 1000};
+  const pos = state.photoPos;
+
+  if (tpl === "moderna"){
+    margins = {top: 700, bottom: 700, left: 700, right: 700};
+    const TOTAL = 11906 - 1400, LW = 3300, RW = TOTAL - LW;
+    const side = [], main = [];
+    const ws = writer(side), wm = writer(main, RW - 300 - 120);
+    if (photoImg) side.push(imgPara(D.AlignmentType.CENTER, photoImg.ratio === 1 ? 120 : 104));
+    const cl = contactLine(cv.contacto);
+    if (cl.length){ ws.heading(L.contact, true); cl.forEach(x => side.push(P({children:[R(x, {size:sz(18)})], spacing:{after:40}}))); }
+    const sk = skillsList();
+    if (sk.length){ ws.heading(L.skills, true); sk.forEach(h => { if (h.categoria) side.push(P({children:[R(h.categoria, {bold:true, size:sz(19)})], keepNext:true})); side.push(P({children:[R(h.items.join(", "), {size:sz(18)})], spacing:{after:90}})); }); }
+    const lg = langsList();
+    if (lg.length){ ws.heading(L.langs, true); lg.forEach(i => side.push(P({children:[R(i.idioma, {bold:true, size:sz(19)}), ...(i.nivel ? [R(" · " + i.nivel, {size:sz(18), color:GRAY})] : [])], spacing:{after:50}}))); }
+    if (!side.length) side.push(P({children:[]}));
+    main.push(P({children:[R(cv.nombre, {bold:true, size:44, color:INK})], spacing:{after:40}}));
+    if (cv.titular) main.push(P({children:[R(cv.titular, {bold:true, size:24, color:acc})], spacing:{after:60}}));
+    bodyMain(wm); bodyOtros(wm);
+    kids.push(new D.Table({
+      width: {size: TOTAL, type: D.WidthType.DXA}, columnWidths: [LW, RW], layout: D.TableLayoutType ? D.TableLayoutType.FIXED : undefined,
+      borders: noTbl,
+      rows: [new D.TableRow({children: [
+        new D.TableCell({borders: cb, width: {size: LW, type: D.WidthType.DXA}, shading: {fill: TINT, type: D.ShadingType.CLEAR, color: "auto"},
+          margins: {top: 300, bottom: 300, left: 220, right: 220}, children: side}),
+        new D.TableCell({borders: cb, width: {size: RW, type: D.WidthType.DXA}, margins: {top: 200, bottom: 200, left: 300, right: 120}, children: main})
+      ]})]
+    }));
+  } else {
+    const w = writer(kids);
+    if (tpl === "banda" && D.Table){
+      const shade = {fill: acc, type: D.ShadingType.CLEAR, color: "auto"};
+      const centerB = !!photoImg && pos === "centro";
+      const head = headParas({center: centerB, nameColor: "FFFFFF", titleColor: SOFT, contactColor: SOFT, after: 0});
+      const cellM = {top: 260, bottom: 260, left: 300, right: 300};
+      let cells;
+      if (photoImg && !centerB){
+        const pc = new D.TableCell({borders: cb, shading: shade, width: {size: 1900, type: D.WidthType.DXA}, verticalAlign: D.VerticalAlign.CENTER, margins: cellM,
+          children: [imgPara(pos === "derecha" ? D.AlignmentType.RIGHT : D.AlignmentType.LEFT)]});
+        const tc = new D.TableCell({borders: cb, shading: shade, verticalAlign: D.VerticalAlign.CENTER, margins: cellM, children: head});
+        cells = pos === "derecha" ? [tc, pc] : [pc, tc];
+      } else {
+        cells = [new D.TableCell({borders: cb, shading: shade, margins: cellM, children: photoImg ? [imgPara(D.AlignmentType.CENTER), ...head] : head})];
+      }
+      const cw = cells.length === 2 ? (pos === "derecha" ? [9906 - 1900, 1900] : [1900, 9906 - 1900]) : [9906];
+      kids.push(new D.Table({width: {size: 9906, type: D.WidthType.DXA}, columnWidths: cw, borders: noTbl, rows: [new D.TableRow({children: cells})]}));
+      kids.push(P({children: [], spacing: {after: 60}}));
+    } else {
+      const centerAll = tpl === "minimal" && !photoImg;
+      const head = headParas({center: centerAll || (photoImg && pos === "centro")});
+      if (photoImg){
+        if (pos === "centro" || !D.Table){
+          kids.push(imgPara(D.AlignmentType.CENTER), ...head);
+        } else {
+          const photoCell = new D.TableCell({borders: cb, width: {size: 1900, type: D.WidthType.DXA}, verticalAlign: D.VerticalAlign.CENTER,
+            children: [imgPara(pos === "derecha" ? D.AlignmentType.RIGHT : D.AlignmentType.LEFT)]});
+          const textCell = new D.TableCell({borders: cb, verticalAlign: D.VerticalAlign.CENTER,
+            margins: pos === "derecha" ? {right: 200} : {left: 200}, children: head});
+          kids.push(new D.Table({
+            width: {size: 9906, type: D.WidthType.DXA}, columnWidths: pos === "derecha" ? [9906 - 1900, 1900] : [1900, 9906 - 1900], borders: noTbl,
+            rows: [new D.TableRow({children: pos === "derecha" ? [textCell, photoCell] : [photoCell, textCell]})]
+          }));
+        }
+      } else kids.push(...head);
+    }
+    bodyMain(w); bodySkillsInline(kids, w); bodyOtros(w);
+  }
 
   const doc = new D.Document({
     creator: "Encaja",
     title: "CV " + (cv.nombre || ""),
-    styles: {default: {document: {run: {font: "Calibri", size: 21, color: "1E2530"}, paragraph: {spacing: {line: 276}}}}},
-    sections: [{properties: {page: {margin: {top: 900, bottom: 900, left: 1000, right: 1000}}}, children: kids}]
+    styles: {default: {document: {run: {font: FONT, size: sz(21), color: "1E2530"}, paragraph: {spacing: {line: state.dense ? 252 : 276}}}}},
+    sections: [{properties: {page: {margin: margins}}, children: kids}]
   });
   return D.Packer.toBlob(doc);
 }
