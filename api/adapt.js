@@ -1,6 +1,6 @@
 // Genera el CV adaptado mientras el usuario ve el anuncio. Devuelve el resultado CIFRADO:
 // la clave para leerlo solo se entrega en /api/unlock cuando han pasado los segundos del anuncio.
-const { verifyUser, db, buildPrompt, callClaude, parseJSON, encrypt, MAX_CHARS } = require("./_lib");
+const { verifyUser, db, buildPrompt, buildInterviewPrompt, callClaude, parseJSON, encrypt, MAX_CHARS } = require("./_lib");
 
 const IMG_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -15,6 +15,28 @@ module.exports = async (req, res) => {
     const ticket = String(b.ticket || "");
     if (!/^[a-f0-9]{32}$/.test(ticket)) return res.status(400).json({ error: "ticket" });
 
+    const isInterview = b.mode === "interview";
+    if (isInterview) {
+      const rows = await db(
+        `usos?nonce=eq.${ticket}&user_id=eq.${user.id}&kind=eq.interview&used_at=is.null`,
+        { method: "PATCH", body: { used_at: new Date().toISOString() }, prefer: "return=representation" }
+      );
+      if (!rows || !rows.length) return res.status(409).json({ error: "ticket" });
+      claimed = rows[0];
+      const prompt = buildInterviewPrompt({
+        cv: JSON.stringify(b.cv || {}).slice(0, 20000),
+        puesto: String(b.puesto || "").slice(0, 200),
+        empresa: String(b.empresa || "").slice(0, 200),
+        faltan: Array.isArray(b.faltan) ? b.faltan.slice(0, 20).map(String) : [],
+        coincidencias: Array.isArray(b.coincidencias) ? b.coincidencias.slice(0, 20).map(String) : [],
+        jobText: String(b.jobText || "").slice(0, MAX_CHARS)
+      });
+      const out = parseJSON(await callClaude([{ role: "user", content: prompt }]));
+      const list = Array.isArray(out.entrevista) ? out.entrevista.slice(0, 6) : [];
+      if (!list.length) throw new Error("bad json");
+      return res.status(200).json(encrypt(JSON.stringify({ entrevista: list }), claimed.key));
+    }
+
     const cvText = String(b.cvText || "").slice(0, MAX_CHARS);
     const jobText = String(b.jobText || "").slice(0, MAX_CHARS);
     const images = Array.isArray(b.images) ? b.images.slice(0, 8) : [];
@@ -28,7 +50,7 @@ module.exports = async (req, res) => {
 
     // Marca el ticket como usado (solo una vez).
     const rows = await db(
-      `usos?nonce=eq.${ticket}&user_id=eq.${user.id}&used_at=is.null`,
+      `usos?nonce=eq.${ticket}&user_id=eq.${user.id}&kind=eq.cv&used_at=is.null`,
       { method: "PATCH", body: { used_at: new Date().toISOString() }, prefer: "return=representation" }
     );
     if (!rows || !rows.length) return res.status(409).json({ error: "ticket" });

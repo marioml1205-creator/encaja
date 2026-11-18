@@ -5,8 +5,8 @@ module.exports = async (req, res) => {
   try {
     const user = await verifyUser(req);
     if (!user) return res.status(401).json({ error: "auth" });
-    const u = await usage(user.id, ipHash(req));
-    res.status(200).json({ remaining: u.remaining, limit: DAILY_LIMIT });
+    const u = await usage(user.id, ipHash(req), user);
+    res.status(200).json({ remaining: u.remaining, limit: DAILY_LIMIT, unlimited: !!u.unlimited });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "server" });
