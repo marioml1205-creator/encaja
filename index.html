@@ -304,6 +304,9 @@ label.linkbtn{cursor:pointer}
 .savebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;font-size:14px}
 .savebar.ok{border-color:color-mix(in srgb,var(--good) 45%,transparent);color:var(--good);font-weight:600}
 .savebar span{flex:1;min-width:200px}
+.cvcount{list-style:none;font-size:13px;color:var(--muted);padding:2px 2px 6px}
+.savebar input{flex:1 1 200px;max-width:320px;padding:8px 10px;font-weight:500;color:var(--ink)}
+.savebar.ok input{border-color:color-mix(in srgb,var(--good) 35%,var(--line))}
 .cvlist{list-style:none;margin:0;padding:0 16px 16px;display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow:auto}
 .cvitem{display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:12px;padding:12px 14px}
 .cvitem .t{flex:1;min-width:0}
@@ -519,6 +522,10 @@ const state = {
   photoPos: "izquierda", // izquierda | derecha | centro
   photoShape: "rect",    // rect | circ
   tpl: "clasica",        // clasica | moderna | banda | minimal
+  titulo: "",            // name the user gives the saved CV
+  photoPath: null,       // photo file in Supabase Storage for the saved CV
+  photoUp: null,         // photo value last uploaded
+  saveError: null,       // "limit" | "error"
   dense: false,
   cvFile: null,
   busy: false
@@ -1017,11 +1024,13 @@ async function runAI(extra){
     closeAd();
 
     if (extra && state.result && state.result.entrevista && !data.entrevista) data.entrevista = state.result.entrevista;
-    state.result = data; state.isExample = false; state.savedId = null;
+    const keepId = extra ? state.savedId : null;
+    if (!extra){ state.titulo = ""; state.photoPath = null; state.photoUp = null; }
+    state.result = data; state.isExample = false; state.savedId = keepId; state.saveError = null;
     editing = false; undoStack = [];
     if (!extra) state.lastPayload = payload;
     render();
-    saveCv();
+    if (isAnon()) stashPending(); else if (keepId) persistNow(); else saveCv();
     $("#results").scrollIntoView({behavior:"smooth", block:"start"});
     if (extra) toast("CV actualizado");
   } catch(e){
@@ -1115,7 +1124,7 @@ function setMode(m){
   $("#authPass").setAttribute("autocomplete", m === "signup" ? "new-password" : "current-password");
   authMsg("");
 }
-function openAuth(mode){ setMode(mode || "signup"); $("#authView").classList.remove("hidden"); setTimeout(() => $("#authEmail").focus(), 50); }
+function openAuth(mode){ if (isAnon()) stashPending(); setMode(mode || "signup"); $("#authView").classList.remove("hidden"); setTimeout(() => $("#authEmail").focus(), 50); }
 function closeAuth(){ $("#authView").classList.add("hidden"); }
 $("#tabSignup").addEventListener("click", () => setMode("signup"));
 $("#tabLogin").addEventListener("click", () => setMode("login"));
@@ -1214,42 +1223,157 @@ $("#resetForm").addEventListener("submit", async e => {
 $("#logoutBtn").addEventListener("click", async () => { await sb.auth.signOut(); });
 
 /* ---------- saved CVs (only with an account) ---------- */
-async function saveCv(){
-  if (isAnon() || !state.result || state.isExample || state.savedId) return;
+/* ---------- CV made before signing up: kept in this browser until the account exists ---------- */
+const PENDING_KEY = "encaja_pendiente";
+function defaultTitle(){ const r = state.result || {}; return [r.puesto, r.empresa].filter(Boolean).join(" · ") || "Mi CV"; }
+const payloadLite = () => { const p = state.lastPayload || {}; return {cvText: p.cvText || "", jobText: p.jobText || "", lang: p.lang || "auto", notes: p.notes || ""}; };
+let smallCache = {src: null, out: null};
+async function smallPhoto(){
+  if (!state.photo) return null;
+  if (smallCache.src === state.photo) return smallCache.out;
+  let out = state.photo;
   try {
-    const p = state.lastPayload || {};
+    const img = await loadImg(state.photo);
+    const w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, 480 / Math.max(w, h));
+    if (k < 1 || state.photo.length > 120000){
+      const c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
+      const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+      out = c.toDataURL("image/jpeg", 0.85);
+    }
+  } catch(e){}
+  smallCache = {src: state.photo, out};
+  return out;
+}
+async function stashPending(){
+  if (!state.result || state.isExample) return;
+  const base = {result: state.result, photoPos: state.photoPos, photoShape: state.photoShape, color: state.color, tpl: state.tpl, dense: state.dense,
+    titulo: state.titulo || defaultTitle(), payload: payloadLite(), ts: Date.now()};
+  try { localStorage.setItem(PENDING_KEY, JSON.stringify({...base, photo: await smallPhoto()})); }
+  catch(e){ try { localStorage.setItem(PENDING_KEY, JSON.stringify(base)); } catch(_){} }
+}
+function readPending(){
+  try { const p = JSON.parse(localStorage.getItem(PENDING_KEY) || "null"); if (p && p.result && Date.now() - p.ts < 7 * 864e5) return p; } catch(e){}
+  return null;
+}
+function clearPending(){ try { localStorage.removeItem(PENDING_KEY); } catch(e){} }
+let claiming = false;
+async function claimPending(){
+  if (isAnon() || claiming) return;
+  claiming = true;
+  try {
+    if (state.result && !state.isExample){
+      if (!state.savedId) await saveCv();
+      return;
+    }
+    const p = readPending(); if (!p) return;
+    state.result = p.result; state.isExample = false; state.savedId = null; state.saveError = null;
+    state.photoPath = null; state.photoUp = null;
+    state.photo = p.photo || null; state.photoPos = p.photoPos || "izquierda"; state.photoShape = p.photoShape || "rect";
+    if (p.color) state.color = p.color;
+    state.tpl = p.tpl || "clasica"; state.dense = !!p.dense; state.titulo = p.titulo || "";
+    state.lastPayload = p.payload && p.payload.cvText ? {...p.payload, images: []} : null;
+    editing = false; undoStack = [];
+    render();
+    await saveCv();
+    if (state.savedId){ toast("Tu CV se ha guardado en Mis CVs"); $("#results").scrollIntoView({behavior:"smooth", block:"start"}); }
+  } finally { claiming = false; }
+}
+
+const MAX_CVS = 10;
+const PHOTO_BUCKET = "fotos";
+/* photo goes to Supabase Storage (1 GB free) instead of the database; falls back to inline if the bucket is missing */
+async function uploadPhoto(){
+  if (!state.photo){
+    if (state.photoPath){ sb.storage.from(PHOTO_BUCKET).remove([state.photoPath]).catch(() => {}); }
+    state.photoPath = null; state.photoUp = null;
+    return {photoPath: null, photo: null};
+  }
+  if (state.photoPath && state.photoUp === state.photo) return {photoPath: state.photoPath, photo: null};
+  const small = await smallPhoto();
+  try {
+    const blob = await (await fetch(small)).blob();
+    const path = state.photoPath || `${session.user.id}/${(crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(36).slice(2))}.jpg`;
+    const {error} = await sb.storage.from(PHOTO_BUCKET).upload(path, blob, {upsert: true, contentType: "image/jpeg"});
+    if (error) throw error;
+    state.photoPath = path; state.photoUp = state.photo;
+    return {photoPath: path, photo: null};
+  } catch(e){
+    return {photoPath: null, photo: small};
+  }
+}
+async function downloadPhoto(path){
+  try {
+    const {data, error} = await sb.storage.from(PHOTO_BUCKET).download(path);
+    if (error || !data) return null;
+    return await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => res(null); fr.readAsDataURL(data); });
+  } catch(e){ return null; }
+}
+let savingCv = false;
+async function saveCv(){
+  if (isAnon() || !state.result || state.isExample || state.savedId || savingCv) return;
+  savingCv = true;
+  try {
+    const {count} = await sb.from("cvs").select("id", {count: "exact", head: true});
+    if (count != null && count >= MAX_CVS){ state.saveError = "limit"; render(); return; }
+    const ph = await uploadPhoto();
     const {data, error} = await sb.from("cvs").insert({
       user_id: session.user.id,
       puesto: state.result.puesto || "",
       empresa: state.result.empresa || "",
       data: {
-        result: state.result,
-        photo: state.photo, photoPos: state.photoPos, photoShape: state.photoShape, color: state.color, tpl: state.tpl, dense: state.dense,
-        payload: {cvText: p.cvText || "", jobText: p.jobText || "", lang: p.lang || "auto", notes: p.notes || ""}
+        result: state.result, titulo: state.titulo || defaultTitle(),
+        photo: ph.photo, photoPath: ph.photoPath, photoPos: state.photoPos, photoShape: state.photoShape, color: state.color, tpl: state.tpl, dense: state.dense,
+        payload: payloadLite()
       }
     }).select("id").single();
     if (error) throw error;
-    state.savedId = data.id;
+    state.savedId = data.id; state.saveError = null;
+    clearPending();
     render();
-  } catch(e){ toast("No se pudo guardar el CV en tu cuenta"); }
+  } catch(e){
+    state.saveError = /cv_limit/.test((e && e.message) || "") ? "limit" : "error";
+    if (state.saveError === "error") toast("No se pudo guardar el CV en tu cuenta");
+    render();
+  } finally { savingCv = false; }
+}
+async function renameCv(id, titulo){
+  const {data: row, error} = await sb.from("cvs").select("data").eq("id", id).single();
+  if (error || !row) throw error || new Error("no row");
+  const d = row.data || {}; d.titulo = titulo;
+  const r = await sb.from("cvs").update({data: d}).eq("id", id);
+  if (r.error) throw r.error;
 }
 const fmtDate = d => new Date(d).toLocaleDateString("es-ES", {day:"numeric", month:"short", year:"numeric"});
 async function openMyCvs(){
   $("#cvsModal").classList.remove("hidden");
   const list = $("#cvList");
   list.innerHTML = `<li class="cvempty">Cargando…</li>`;
-  const {data, error} = await sb.from("cvs").select("id,puesto,empresa,created_at").order("created_at", {ascending:false}).limit(100);
+  const {data, error} = await sb.from("cvs").select("id,puesto,empresa,created_at,titulo:data->>titulo,photoPath:data->>photoPath").order("created_at", {ascending:false}).limit(100);
   if (error){ list.innerHTML = `<li class="cvempty">No se han podido cargar tus CVs.</li>`; return; }
   if (!data.length){ list.innerHTML = `<li class="cvempty">Todavía no has guardado ningún CV. Los que adaptes con la sesión iniciada aparecerán aquí.</li>`; return; }
-  list.innerHTML = data.map(c => `<li class="cvitem">
-      <div class="t"><b>${esc(c.puesto || "CV adaptado")}${c.empresa ? " · " + esc(c.empresa) : ""}</b><small>${fmtDate(c.created_at)}</small></div>
+  list.innerHTML = `<li class="cvcount">${data.length} de ${MAX_CVS} CVs guardados${data.length >= MAX_CVS ? " · borra alguno para guardar más" : ""}</li>` + data.map(c => `<li class="cvitem">
+      <div class="t"><b>${esc(c.titulo || ((c.puesto || "CV adaptado") + (c.empresa ? " · " + c.empresa : "")))}</b><small>${c.titulo && c.puesto ? esc(c.puesto) + " · " : ""}${fmtDate(c.created_at)}</small></div>
       <button class="btn btn-ghost" data-open="${c.id}" style="padding:8px 12px">Abrir</button>
-      <button class="x" data-del="${c.id}" aria-label="Borrar">🗑</button></li>`).join("");
+      <button class="x" data-ren="${c.id}" data-cur="${esc(c.titulo || "")}" aria-label="Cambiar nombre" title="Cambiar nombre">✏️</button>
+      <button class="x" data-del="${c.id}" data-ph="${esc(c.photoPath || "")}" aria-label="Borrar">🗑</button></li>`).join("");
   list.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => loadCv(b.dataset.open)));
+  list.querySelectorAll("[data-ren]").forEach(b => b.addEventListener("click", async () => {
+    const t = prompt("Nombre del CV", b.dataset.cur || "");
+    if (t == null || !t.trim()) return;
+    try {
+      await renameCv(b.dataset.ren, t.trim().slice(0, 80));
+      if (String(state.savedId) === String(b.dataset.ren)){ state.titulo = t.trim().slice(0, 80); render(); }
+      openMyCvs();
+    } catch(e){ toast("No se pudo cambiar el nombre"); }
+  }));
   list.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
+    if (!confirm("¿Borrar este CV? No se puede deshacer.")) return;
     const {error} = await sb.from("cvs").delete().eq("id", b.dataset.del);
     if (error) return toast("No se pudo borrar");
-    if (String(state.savedId) === String(b.dataset.del)) state.savedId = null;
+    if (b.dataset.ph) sb.storage.from(PHOTO_BUCKET).remove([b.dataset.ph]).catch(() => {});
+    if (String(state.savedId) === String(b.dataset.del)){ state.savedId = null; state.photoPath = null; state.photoUp = null; }
+    if (state.saveError === "limit") state.saveError = null;
+    if (state.result && !state.isExample) render();
     openMyCvs();
   }));
 }
@@ -1261,6 +1385,9 @@ async function loadCv(id){
   state.photo = d.photo || null; state.photoPos = d.photoPos || "izquierda"; state.photoShape = d.photoShape || "rect";
   if (d.color) state.color = d.color;
   state.tpl = d.tpl || "clasica"; state.dense = !!d.dense; editing = false; undoStack = [];
+  state.titulo = d.titulo || ""; state.saveError = null;
+  state.photoPath = d.photoPath || null; state.photoUp = null;
+  if (state.photoPath){ const ph = await downloadPhoto(state.photoPath); if (ph){ state.photo = ph; state.photoUp = ph; } }
   state.lastPayload = d.payload && d.payload.cvText ? {...d.payload, images: []} : null;
   $("#cvsModal").classList.add("hidden");
   render(); refreshPhotoUI();
@@ -1299,18 +1426,19 @@ async function boot(){
       return;
     }
     if (event === "SIGNED_OUT"){
-      usesLeft = null; state.savedId = null;
+      usesLeft = null; state.savedId = null; state.photoPath = null; state.photoUp = null; state.saveError = null;
       setTimeout(() => ensureSession().then(route), 0);
       return;
     }
     if (event === "SIGNED_IN" && !isAnon()){
       usesLeft = null;
-      setTimeout(() => { saveCv(); }, 0);
+      setTimeout(() => { claimPending(); }, 0);
     }
     if ($("#resetView").classList.contains("hidden")) { $("#appView").classList.remove("hidden"); route(); }
   });
   await ensureSession();
   route();
+  claimPending();
 }
 
 /* ---------- photo controls ---------- */
@@ -1642,15 +1770,19 @@ function setEditing(on){
 /* keep a saved CV in sync with edits and design changes */
 let persistT = null;
 function canPersist(){ return state.savedId && !isAnon() && !state.isExample && sb; }
-function persistSoon(){ if (!canPersist()) return; clearTimeout(persistT); persistT = setTimeout(persistNow, 1500); }
+let stashT = null;
+function persistSoon(){
+  if (state.result && !state.isExample && isAnon()){ clearTimeout(stashT); stashT = setTimeout(stashPending, 1500); return; }
+  if (!canPersist()) return; clearTimeout(persistT); persistT = setTimeout(persistNow, 1500); }
 async function persistNow(){
   clearTimeout(persistT);
   if (!canPersist()) return;
   try {
     const {data: row} = await sb.from("cvs").select("data").eq("id", state.savedId).single();
     if (!row) return;
+    const ph = await uploadPhoto();
     const d = Object.assign(row.data || {}, {
-      result: state.result, photo: state.photo, photoPos: state.photoPos, photoShape: state.photoShape,
+      result: state.result, titulo: state.titulo || defaultTitle(), photo: ph.photo, photoPath: ph.photoPath, photoPos: state.photoPos, photoShape: state.photoShape,
       color: state.color, tpl: state.tpl, dense: state.dense
     });
     await sb.from("cvs").update({data: d}).eq("id", state.savedId);
@@ -1678,8 +1810,20 @@ function render(){
     ${state.isExample ? `<p class="verdict" style="margin-top:-8px">Así se ve un resultado. Sube tu CV y la oferta arriba para generar el tuyo.</p>` : ""}
     <p class="verdict">${esc(r.veredicto)}</p>
     ${state.isExample ? "" : (isAnon()
-      ? `<div class="savebar"><span>¿Quieres guardar este CV para tenerlo siempre a mano? Crea una cuenta gratis y se guardará solo.</span><button class="btn btn-ghost" id="saveSignup" style="padding:8px 14px">Crear cuenta</button></div>`
-      : (state.savedId ? `<div class="savebar ok"><span>✓ Guardado en Mis CVs</span></div>` : ""))}
+      ? `<div class="savebar"><span>¿Quieres guardar este CV? Ponle el nombre que quieras y crea una cuenta gratis.</span>
+          <input type="text" id="cvTitle" maxlength="80" value="${esc(state.titulo || defaultTitle())}" aria-label="Nombre del CV">
+          <button class="btn btn-primary" id="saveSignup" style="padding:8px 14px">Crear cuenta y guardar</button>
+          <button class="linkbtn" id="saveLogin">Ya tengo cuenta</button></div>`
+      : (state.savedId
+        ? `<div class="savebar ok"><span>✓ Guardado en Mis CVs como</span>
+            <input type="text" id="cvTitle" maxlength="80" value="${esc(state.titulo || defaultTitle())}" aria-label="Nombre del CV">
+            <button class="btn btn-ghost" id="renameBtn" style="padding:8px 14px" disabled>Cambiar nombre</button></div>`
+        : state.saveError === "limit"
+        ? `<div class="savebar"><span>Ya tienes ${MAX_CVS} CVs guardados, que es el máximo. Borra alguno que ya no uses para guardar este.</span>
+            <button class="btn btn-primary" id="openCvsLimit" style="padding:8px 14px">Abrir Mis CVs</button></div>`
+        : `<div class="savebar"><span>Este CV aún no está guardado.</span>
+            <input type="text" id="cvTitle" maxlength="80" value="${esc(state.titulo || defaultTitle())}" aria-label="Nombre del CV">
+            <button class="btn btn-primary" id="saveNow" style="padding:8px 14px">Guardar en Mis CVs</button></div>`))}
 
     <div class="card scores">
       ${tape("Encaje de tu CV actual", r.puntuacion_actual, "before")}
@@ -1784,7 +1928,19 @@ function render(){
     document.querySelectorAll(".sw").forEach(x => x.setAttribute("aria-pressed", x === b));
     rerenderPaper(); persistSoon();
   }));
+  if ($("#cvTitle")) $("#cvTitle").addEventListener("input", e => {
+    state.titulo = e.target.value.trim().slice(0, 80);
+    if ($("#renameBtn")) $("#renameBtn").disabled = false;
+    if (isAnon()) persistSoon();
+  });
   if ($("#saveSignup")) $("#saveSignup").addEventListener("click", () => openAuth("signup"));
+  if ($("#saveLogin")) $("#saveLogin").addEventListener("click", () => openAuth("login"));
+  if ($("#saveNow")) $("#saveNow").addEventListener("click", () => saveCv());
+  if ($("#openCvsLimit")) $("#openCvsLimit").addEventListener("click", openMyCvs);
+  if ($("#renameBtn")) $("#renameBtn").addEventListener("click", async () => {
+    try { await renameCv(state.savedId, state.titulo || defaultTitle()); $("#renameBtn").disabled = true; toast("Nombre guardado"); }
+    catch(e){ toast("No se pudo cambiar el nombre"); }
+  });
   if ($("#ivBtn")) $("#ivBtn").addEventListener("click", runInterview);
   $("#dlPdf").addEventListener("click", () => download("pdf"));
   $("#dlDocx").addEventListener("click", () => download("docx"));
