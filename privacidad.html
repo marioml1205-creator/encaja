@@ -18,16 +18,18 @@
 <body>
 <a class="back" href="/">← Volver a Encaja</a>
 <h1>Política de privacidad</h1>
-<p class="muted">Última actualización: 17 de noviembre de 2026</p>
+<p class="muted">Última actualización: 18 de noviembre de 2026</p>
 
 <h2>1. Quién es el responsable</h2>
 <p>El responsable del tratamiento de tus datos en Encaja (encajacv.es) es <strong>Mario Matamoros López</strong>. Puedes contactar escribiendo a <strong>marioml1205@gmail.com</strong>.</p>
 
 <h2>2. Qué datos tratamos</h2>
 <ul>
-  <li><strong>Datos de tu cuenta:</strong> tu email y tu contraseña (guardada cifrada), para que puedas registrarte e iniciar sesión.</li>
+  <li><strong>Sesión anónima:</strong> para usar Encaja no hace falta registrarse. Al entrar se crea un identificador anónimo en tu navegador para aplicar el límite diario.</li>
+<li><strong>Datos de tu cuenta (opcional):</strong> si decides crear una cuenta, tu email y tu contraseña (guardada cifrada).</li>
+<li><strong>CVs guardados (solo con cuenta):</strong> si tienes la sesión iniciada, guardamos los CV adaptados que generes (texto, foto si la añades y el texto de la oferta) para que puedas volver a abrirlos. Puedes borrarlos cuando quieras desde "Mis CVs".</li>
   <li><strong>Tu CV y la oferta de empleo:</strong> el texto que subes para que la herramienta lo adapte. Puede contener datos personales como tu nombre, contacto, formación o experiencia.</li>
-  <li><strong>Datos de uso:</strong> cuántas adaptaciones haces y cuándo, para aplicar el límite diario gratuito.</li>
+  <li><strong>Datos de uso:</strong> cuántas adaptaciones haces y cuándo, junto con un identificador cifrado de tu dirección IP (nunca la IP en claro), para aplicar el límite diario gratuito y evitar abusos.</li>
   <li><strong>Cookies y datos del dispositivo:</strong> los usa Google para mostrar anuncios, solo según el consentimiento que des en el aviso de cookies.</li>
 </ul>
 
@@ -38,7 +40,7 @@
   <li>Controlar el número de usos gratuitos y evitar abusos.</li>
   <li>Mostrar anuncios que financian el servicio gratuito.</li>
 </ul>
-<p>No vendemos tus datos. Encaja no guarda el texto de tu CV ni de la oferta en su base de datos: se envían para generar el resultado y se descartan.</p>
+<p>No vendemos tus datos. Si usas Encaja sin cuenta, no guardamos el texto de tu CV ni de la oferta: se envían para generar el resultado y se descartan. Si tienes cuenta, solo se guardan los CV que generes, para que puedas recuperarlos.</p>
 
 <h2>4. Base legal</h2>
 <p>Tratamos tus datos para ejecutar el servicio que solicitas al registrarte y usar la herramienta (art. 6.1.b RGPD). Las cookies publicitarias se basan en tu consentimiento (art. 6.1.a RGPD), que puedes retirar en cualquier momento.</p>
@@ -46,7 +48,8 @@
 <h2>5. Con quién se comparten</h2>
 <p>Para funcionar, Encaja usa estos proveedores, que tratan los datos por cuenta nuestra:</p>
 <ul>
-  <li><strong>Supabase</strong>: cuentas de usuario y registro de usos (servidores en la Unión Europea).</li>
+  <li><strong>Supabase</strong>: sesiones, cuentas de usuario, CVs guardados y registro de usos (servidores en la Unión Europea).</li>
+<li><strong>Cloudflare (Turnstile)</strong>: comprobación invisible de que eres una persona y no un robot.</li>
   <li><strong>Resend</strong>: envío de los emails de la cuenta (confirmación de registro y cambio de contraseña).</li>
   <li><strong>Vercel</strong>: alojamiento de la web.</li>
   <li><strong>Anthropic</strong>: el modelo de IA (Claude) que procesa tu CV y la oferta para generar la versión adaptada. Según sus condiciones de API, no usa estos datos para entrenar sus modelos.</li>
@@ -55,7 +58,7 @@
 <p>Algunos de estos proveedores pueden tratar datos fuera del Espacio Económico Europeo, con las garantías previstas en el RGPD (como las cláusulas contractuales tipo de la Comisión Europea).</p>
 
 <h2>6. Cuánto tiempo los guardamos</h2>
-<p>Los datos de tu cuenta, mientras la mantengas activa. Si pides borrarla, la eliminamos. El registro de usos se conserva solo el tiempo necesario para aplicar el límite diario.</p>
+<p>Los datos de tu cuenta y tus CVs guardados, mientras mantengas la cuenta o hasta que los borres. Si pides borrar la cuenta, la eliminamos junto con tus CVs. El registro de usos se conserva solo el tiempo necesario para aplicar el límite diario.</p>
 
 <h2>7. Tus derechos</h2>
 <p>Puedes pedir acceso, rectificación, supresión, oposición, limitación y portabilidad de tus datos escribiendo a <strong>marioml1205@gmail.com</strong>. Si crees que no hemos atendido bien tu solicitud, puedes reclamar ante la <a href="https://www.aepd.es" target="_blank" rel="noopener">Agencia Española de Protección de Datos</a>.</p>
@@ -65,5 +68,9 @@
 
 <h2>9. Cambios</h2>
 <p>Si cambiamos esta política, actualizaremos la fecha de arriba.</p>
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

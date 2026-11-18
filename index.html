@@ -213,6 +213,7 @@ label.linkbtn{cursor:pointer}
 .linkbtn{border:0;background:none;color:var(--accent);cursor:pointer;font-weight:600;padding:2px 4px;font-size:13px}
 
 /* auth */
+.auth.overlay{position:fixed;inset:0;z-index:30;background:rgba(8,14,24,.72);overflow:auto;min-height:0}
 .auth{min-height:100vh;display:grid;place-items:center;padding:32px 16px}
 .auth-box{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px;display:flex;flex-direction:column;gap:16px}
 .auth-box .logo{font-size:28px}
@@ -230,6 +231,18 @@ label.linkbtn{cursor:pointer}
 .auth-perks{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--muted);margin:0;padding:0;list-style:none}
 .auth-perks li::before{content:"✓ ";color:var(--good);font-weight:700}
 
+.auth-close{position:absolute;top:14px;right:14px;border:0;background:var(--bg);width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;color:var(--muted)}
+.auth-box{position:relative}
+.savebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;font-size:14px}
+.savebar.ok{border-color:color-mix(in srgb,var(--good) 45%,transparent);color:var(--good);font-weight:600}
+.savebar span{flex:1;min-width:200px}
+.cvlist{list-style:none;margin:0;padding:0 16px 16px;display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow:auto}
+.cvitem{display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:12px;padding:12px 14px}
+.cvitem .t{flex:1;min-width:0}
+.cvitem b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cvitem small{color:var(--muted)}
+.cvempty{padding:24px 16px;color:var(--muted);text-align:center}
+#tsBox{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:40}
 /* ad modal */
 .modal{position:fixed;inset:0;background:rgba(8,14,24,.72);display:grid;place-items:center;padding:16px;z-index:20}
 .modal-box{width:100%;max-width:680px;background:var(--surface);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
@@ -249,12 +262,13 @@ footer{color:var(--muted);font-size:12.5px;text-align:center}
 </style>
 </head>
 <body>
-<section class="auth hidden" id="authView" aria-label="Acceso">
+<section class="auth overlay hidden" id="authView" aria-label="Acceso" role="dialog" aria-modal="true">
   <div class="auth-box">
+    <button class="auth-close" id="authClose" type="button" aria-label="Cerrar">×</button>
     <div class="logo"><div class="logo-mark" aria-hidden="true"><span>E</span></div>Encaja</div>
     <div>
       <h1 id="authTitle">Crea tu cuenta gratis</h1>
-      <p>Tu CV adaptado a cada oferta en un minuto.</p>
+      <p>Es opcional: con cuenta, tus CVs adaptados se guardan para descargarlos cuando quieras.</p>
     </div>
     <div class="auth-tabs" role="tablist">
       <button type="button" role="tab" id="tabSignup" aria-selected="true">Registrarme</button>
@@ -268,9 +282,9 @@ footer{color:var(--muted);font-size:12.5px;text-align:center}
       <button class="linkbtn" type="button" id="forgotBtn">He olvidado mi contraseña</button>
     </form>
     <ul class="auth-perks">
-      <li>Análisis de qué le falta a tu CV para cada oferta</li>
-      <li>CV nuevo en PDF y Word</li>
-      <li>Gratis: solo ves un anuncio corto por cada CV</li>
+      <li>Guarda todos tus CVs adaptados</li>
+      <li>Vuelve a abrirlos y descargarlos cuando quieras</li>
+      <li>Sigue siendo 100% gratis</li>
     </ul>
     <p style="font-size:13px;text-align:center"><a href="/guias/" style="color:var(--accent)">Guías para mejorar tu currículum</a> · <a href="/privacidad.html" style="color:var(--muted)">Privacidad</a></p>
   </div>
@@ -287,6 +301,14 @@ footer{color:var(--muted);font-size:12.5px;text-align:center}
   </div>
 </section>
 
+<div class="modal hidden" id="cvsModal" role="dialog" aria-modal="true" aria-labelledby="cvsTitle">
+  <div class="modal-box">
+    <div class="ad-top"><span id="cvsTitle" style="font-weight:700;color:var(--ink);font-size:16px">Mis CVs</span><button class="x" id="cvsClose" aria-label="Cerrar">×</button></div>
+    <ul class="cvlist" id="cvList"></ul>
+  </div>
+</div>
+<div id="tsBox"></div>
+
 <div class="modal hidden" id="adModal" role="dialog" aria-modal="true" aria-labelledby="adTitle">
   <div class="modal-box">
     <div class="ad-top"><span id="adTitle">Anuncio · tu CV se está preparando</span><b id="adCount">30</b></div>
@@ -295,8 +317,8 @@ footer{color:var(--muted);font-size:12.5px;text-align:center}
       <div id="adContainer"></div>
       <div class="house" id="houseAd">
         <div class="tape-anim" aria-hidden="true"></div>
-        <h3>Encaja Premium</h3>
-        <p>CVs ilimitados, sin anuncios y con cartas de presentación a medida. Muy pronto.</p>
+        <h3>Consejo mientras esperas</h3>
+        <p>Envía siempre un CV adaptado a cada oferta. Tienes más trucos en las guías gratis de Encaja.</p>
       </div>
     </div>
     <div class="ad-bar"><div id="adBar"></div></div>
@@ -307,7 +329,7 @@ footer{color:var(--muted);font-size:12.5px;text-align:center}
   </div>
 </div>
 
-<div class="wrap hidden" id="appView">
+<div class="wrap" id="appView">
 
   <header class="top">
     <div class="brand">
@@ -317,7 +339,9 @@ footer{color:var(--muted);font-size:12.5px;text-align:center}
     <div class="userbar">
       <span class="uses" id="usesLeft"></span>
       <span id="userEmail"></span>
-      <button class="linkbtn" id="logoutBtn">Cerrar sesión</button>
+      <button class="linkbtn hidden" id="myCvsBtn">Mis CVs</button>
+      <button class="linkbtn" id="loginBtn">Iniciar sesión</button>
+      <button class="linkbtn hidden" id="logoutBtn">Cerrar sesión</button>
     </div>
   </header>
 
@@ -409,6 +433,7 @@ const state = {
   isExample: true,
   color: CV_COLORS[0].hex,
   lastPayload: null,
+  savedId: null,
   photo: null,        // dataURL (jpeg, original proportions)
   photoPos: "izquierda", // izquierda | derecha | centro
   photoShape: "rect",    // rect | circ
@@ -863,7 +888,7 @@ async function decrypt(enc, keyHex){
 
 function friendlyError(e){
   const code = e && (e.code || (e.body && e.body.error));
-  if (e && e.status === 401) return "Tu sesión ha caducado. Vuelve a iniciar sesión.";
+  if (e && e.status === 401) return "Tu sesión ha caducado. Vuelve a pulsar el botón.";
   if (code === "limit") return `Has llegado al límite de ${e.body.limit} CVs en 24 horas. Vuelve mañana.`;
   if (code === "ai") return "La IA no ha podido generar el CV. No se te ha descontado el uso: vuelve a intentarlo.";
   if (code === "image") return "Alguna imagen es demasiado grande. Prueba con una captura más pequeña.";
@@ -880,6 +905,7 @@ async function runAI(extra){
   let failed = false;
   try {
     const payload = extra ? {...state.lastPayload, ...extra} : await buildPayload();
+    if (!(await ensureSession())) throw {code: "auth"};
     const st = await api("/api/start");
     setUses(st.remaining - 1);
     const ticket = st.ticket;
@@ -906,14 +932,15 @@ async function runAI(extra){
     await new Promise(res => { $("#adContinue").onclick = res; });
     closeAd();
 
-    state.result = data; state.isExample = false;
+    state.result = data; state.isExample = false; state.savedId = null;
     if (!extra) state.lastPayload = payload;
     render();
+    saveCv();
     $("#results").scrollIntoView({behavior:"smooth", block:"start"});
     if (extra) toast("CV actualizado");
   } catch(e){
     if (!failed){ failed = true; closeAd(); showErr(friendlyError(e)); }
-    if (e && e.status === 401) await sb.auth.signOut();
+    if (e && e.status === 401) { session = null; await ensureSession(); route(); }
   } finally {
     state.busy = false; refreshGo();
   }
@@ -934,7 +961,8 @@ function setUses(n){
   $("#usesLeft").textContent = `${usesLeft} CV${usesLeft === 1 ? "" : "s"} gratis hoy`;
 }
 
-/* ---------- auth ---------- */
+/* ---------- auth (optional) ---------- */
+const isAnon = () => !session || !!(session.user && session.user.is_anonymous);
 let authMode = "signup";
 function authMsg(text, kind){ const m = $("#authMsg"); m.textContent = text || ""; m.className = "auth-msg" + (text ? " show " + kind : ""); }
 function setMode(m){
@@ -946,17 +974,63 @@ function setMode(m){
   $("#authPass").setAttribute("autocomplete", m === "signup" ? "new-password" : "current-password");
   authMsg("");
 }
+function openAuth(mode){ setMode(mode || "signup"); $("#authView").classList.remove("hidden"); setTimeout(() => $("#authEmail").focus(), 50); }
+function closeAuth(){ $("#authView").classList.add("hidden"); }
 $("#tabSignup").addEventListener("click", () => setMode("signup"));
 $("#tabLogin").addEventListener("click", () => setMode("login"));
+$("#authClose").addEventListener("click", closeAuth);
+$("#loginBtn").addEventListener("click", () => openAuth("login"));
 
 function authError(e){
   const m = (e && e.message || "").toLowerCase();
   if (m.includes("invalid login")) return "Email o contraseña incorrectos.";
   if (m.includes("already registered")) return "Ya existe una cuenta con ese email. Inicia sesión.";
   if (m.includes("not confirmed")) return "Confirma tu email: te enviamos un enlace al registrarte.";
+  if (m.includes("captcha")) return "No se pudo comprobar que no eres un robot. Recarga la página y vuelve a intentarlo.";
   if (m.includes("rate limit") || m.includes("security purposes")) return "Demasiados intentos. Espera un minuto.";
   if (m.includes("password")) return "La contraseña debe tener al menos 8 caracteres.";
   return "No se ha podido completar. Inténtalo de nuevo.";
+}
+
+/* invisible captcha (Cloudflare Turnstile), only if configured */
+let tsReady = null, tsWidget = null;
+function loadTurnstile(){
+  if (!cfg || !cfg.turnstileSiteKey) return Promise.resolve(false);
+  if (!tsReady) tsReady = new Promise(res => {
+    window.__tsLoaded = () => res(true);
+    const s = document.createElement("script");
+    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__tsLoaded";
+    s.async = true; s.onerror = () => res(false);
+    document.head.appendChild(s);
+  });
+  return tsReady;
+}
+async function captchaToken(){
+  if (!(await loadTurnstile()) || !window.turnstile) return undefined;
+  return new Promise(res => {
+    const done = t => res(t || undefined);
+    try {
+      if (tsWidget !== null) { turnstile.remove(tsWidget); tsWidget = null; }
+      tsWidget = turnstile.render("#tsBox", {
+        sitekey: cfg.turnstileSiteKey, appearance: "interaction-only", language: "es",
+        callback: done, "error-callback": () => done(undefined), "timeout-callback": () => done(undefined)
+      });
+    } catch(e){ done(undefined); }
+  });
+}
+const withCaptcha = async opts => { const t = await captchaToken(); return t ? {...(opts || {}), captchaToken: t} : (opts || {}); };
+
+async function ensureSession(){
+  if (session) return true;
+  try {
+    const {data, error} = await sb.auth.signInAnonymously({options: await withCaptcha()});
+    if (error) throw error;
+    session = data.session;
+    return true;
+  } catch(e){
+    showErr("No se ha podido iniciar la sesión. Recarga la página para volver a intentarlo.");
+    return false;
+  }
 }
 
 $("#authForm").addEventListener("submit", async e => {
@@ -967,11 +1041,11 @@ $("#authForm").addEventListener("submit", async e => {
   $("#authSubmit").disabled = true;
   try {
     if (authMode === "signup"){
-      const {data, error} = await sb.auth.signUp({email, password, options:{emailRedirectTo: location.origin}});
+      const {data, error} = await sb.auth.signUp({email, password, options: await withCaptcha({emailRedirectTo: location.origin})});
       if (error) throw error;
       if (!data.session) authMsg("Te hemos enviado un email. Pulsa el enlace para activar tu cuenta y luego inicia sesión.", "ok");
     } else {
-      const {error} = await sb.auth.signInWithPassword({email, password});
+      const {error} = await sb.auth.signInWithPassword({email, password, options: await withCaptcha()});
       if (error) throw error;
     }
   } catch(err){ authMsg(authError(err), "bad"); }
@@ -981,7 +1055,8 @@ $("#authForm").addEventListener("submit", async e => {
 $("#forgotBtn").addEventListener("click", async () => {
   const email = $("#authEmail").value.trim();
   if (!/^\S+@\S+\.\S+$/.test(email)) return authMsg("Escribe tu email arriba y vuelve a pulsar.", "bad");
-  const {error} = await sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin});
+  const c = await withCaptcha();
+  const {error} = await sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin, captchaToken: c.captchaToken});
   authMsg(error ? authError(error) : "Si existe una cuenta con ese email, te hemos enviado un enlace para cambiar la contraseña.", error ? "bad" : "ok");
 });
 
@@ -995,16 +1070,71 @@ $("#resetForm").addEventListener("submit", async e => {
   toast("Contraseña cambiada");
 });
 
-$("#logoutBtn").addEventListener("click", () => sb.auth.signOut());
+$("#logoutBtn").addEventListener("click", async () => { await sb.auth.signOut(); });
+
+/* ---------- saved CVs (only with an account) ---------- */
+async function saveCv(){
+  if (isAnon() || !state.result || state.isExample || state.savedId) return;
+  try {
+    const p = state.lastPayload || {};
+    const {data, error} = await sb.from("cvs").insert({
+      user_id: session.user.id,
+      puesto: state.result.puesto || "",
+      empresa: state.result.empresa || "",
+      data: {
+        result: state.result,
+        photo: state.photo, photoPos: state.photoPos, photoShape: state.photoShape, color: state.color,
+        payload: {cvText: p.cvText || "", jobText: p.jobText || "", lang: p.lang || "auto", notes: p.notes || ""}
+      }
+    }).select("id").single();
+    if (error) throw error;
+    state.savedId = data.id;
+    render();
+  } catch(e){ toast("No se pudo guardar el CV en tu cuenta"); }
+}
+const fmtDate = d => new Date(d).toLocaleDateString("es-ES", {day:"numeric", month:"short", year:"numeric"});
+async function openMyCvs(){
+  $("#cvsModal").classList.remove("hidden");
+  const list = $("#cvList");
+  list.innerHTML = `<li class="cvempty">Cargando…</li>`;
+  const {data, error} = await sb.from("cvs").select("id,puesto,empresa,created_at").order("created_at", {ascending:false}).limit(100);
+  if (error){ list.innerHTML = `<li class="cvempty">No se han podido cargar tus CVs.</li>`; return; }
+  if (!data.length){ list.innerHTML = `<li class="cvempty">Todavía no has guardado ningún CV. Los que adaptes con la sesión iniciada aparecerán aquí.</li>`; return; }
+  list.innerHTML = data.map(c => `<li class="cvitem">
+      <div class="t"><b>${esc(c.puesto || "CV adaptado")}${c.empresa ? " · " + esc(c.empresa) : ""}</b><small>${fmtDate(c.created_at)}</small></div>
+      <button class="btn btn-ghost" data-open="${c.id}" style="padding:8px 12px">Abrir</button>
+      <button class="x" data-del="${c.id}" aria-label="Borrar">🗑</button></li>`).join("");
+  list.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => loadCv(b.dataset.open)));
+  list.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
+    const {error} = await sb.from("cvs").delete().eq("id", b.dataset.del);
+    if (error) return toast("No se pudo borrar");
+    if (String(state.savedId) === String(b.dataset.del)) state.savedId = null;
+    openMyCvs();
+  }));
+}
+async function loadCv(id){
+  const {data, error} = await sb.from("cvs").select("id,data").eq("id", id).single();
+  if (error) return toast("No se pudo abrir el CV");
+  const d = data.data || {};
+  state.result = d.result; state.isExample = false; state.savedId = data.id;
+  state.photo = d.photo || null; state.photoPos = d.photoPos || "izquierda"; state.photoShape = d.photoShape || "rect";
+  if (d.color) state.color = d.color;
+  state.lastPayload = d.payload && d.payload.cvText ? {...d.payload, images: []} : null;
+  $("#cvsModal").classList.add("hidden");
+  render(); refreshPhotoUI();
+  $("#results").scrollIntoView({behavior:"smooth", block:"start"});
+}
+$("#myCvsBtn").addEventListener("click", openMyCvs);
+$("#cvsClose").addEventListener("click", () => $("#cvsModal").classList.add("hidden"));
 
 function route(){
-  const logged = !!session;
-  $("#authView").classList.toggle("hidden", logged);
-  $("#appView").classList.toggle("hidden", !logged);
-  if (logged){
-    $("#userEmail").textContent = session.user.email || "";
-    if (usesLeft === null){ setUses(cfg.dailyLimit); api("/api/me").then(r => setUses(r.remaining)).catch(()=>{}); }
-  }
+  const anon = isAnon();
+  $("#userEmail").textContent = anon ? "" : (session.user.email || "");
+  $("#loginBtn").classList.toggle("hidden", !anon);
+  $("#myCvsBtn").classList.toggle("hidden", anon);
+  $("#logoutBtn").classList.toggle("hidden", anon);
+  if (!anon) closeAuth();
+  if (session && usesLeft === null){ setUses(cfg.dailyLimit); api("/api/me").then(r => setUses(r.remaining)).catch(()=>{}); }
 }
 
 async function boot(){
@@ -1013,22 +1143,31 @@ async function boot(){
     cfg = await (await fetch("/api/config")).json();
   } catch(e){ cfg = null; }
   if (!cfg || !cfg.ok || !window.supabase){
-    document.body.innerHTML = '<div class="auth"><div class="auth-box"><h1>Falta configurar Encaja</h1><p>Añade las variables de entorno en Vercel (mira el README) y vuelve a desplegar.</p></div></div>';
+    showErr("Encaja no está disponible ahora mismo. Inténtalo de nuevo en unos minutos.");
     return;
   }
-  loadIMA();
+  loadIMA(); loadTurnstile();
   sb = supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
   session = (await sb.auth.getSession()).data.session;
   sb.auth.onAuthStateChange((event, s) => {
     session = s;
     if (event === "PASSWORD_RECOVERY"){
-      $("#authView").classList.add("hidden"); $("#appView").classList.add("hidden");
+      $("#appView").classList.add("hidden");
       $("#resetView").classList.remove("hidden");
       return;
     }
-    if (event === "SIGNED_OUT") usesLeft = null;
-    if ($("#resetView").classList.contains("hidden")) route();
+    if (event === "SIGNED_OUT"){
+      usesLeft = null; state.savedId = null;
+      setTimeout(() => ensureSession().then(route), 0);
+      return;
+    }
+    if (event === "SIGNED_IN" && !isAnon()){
+      usesLeft = null;
+      setTimeout(() => { saveCv(); }, 0);
+    }
+    if ($("#resetView").classList.contains("hidden")) { $("#appView").classList.remove("hidden"); route(); }
   });
+  await ensureSession();
   route();
 }
 
@@ -1195,6 +1334,9 @@ function render(){
     </div>
     ${state.isExample ? `<p class="verdict" style="margin-top:-8px">Así se ve un resultado. Sube tu CV y la oferta arriba para generar el tuyo.</p>` : ""}
     <p class="verdict">${esc(r.veredicto)}</p>
+    ${state.isExample ? "" : (isAnon()
+      ? `<div class="savebar"><span>¿Quieres guardar este CV para tenerlo siempre a mano? Crea una cuenta gratis y se guardará solo.</span><button class="btn btn-ghost" id="saveSignup" style="padding:8px 14px">Crear cuenta</button></div>`
+      : (state.savedId ? `<div class="savebar ok"><span>✓ Guardado en Mis CVs</span></div>` : ""))}
 
     <div class="card scores">
       ${tape("Encaje de tu CV actual", r.puntuacion_actual, "before")}
@@ -1251,6 +1393,7 @@ function render(){
     document.querySelectorAll(".sw").forEach(x => x.setAttribute("aria-pressed", x === b));
     $("#paperWrap").innerHTML = cvHTML(state.result.cv);
   }));
+  if ($("#saveSignup")) $("#saveSignup").addEventListener("click", () => openAuth("signup"));
   $("#dlPdf").addEventListener("click", () => download("pdf"));
   $("#dlDocx").addEventListener("click", () => download("docx"));
   $("#copyTxt").addEventListener("click", copyText);
@@ -1556,5 +1699,9 @@ refreshPhotoUI();
 boot();
 })();
 </script>
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
