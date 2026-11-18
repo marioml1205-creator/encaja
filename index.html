@@ -243,6 +243,19 @@ label.linkbtn{cursor:pointer}
 .cvitem small{color:var(--muted)}
 .cvempty{padding:24px 16px;color:var(--muted);text-align:center}
 #tsBox{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:40}
+.iv{display:flex;flex-direction:column;gap:10px}
+.iv details{background:var(--bg);border-radius:12px;padding:12px 14px}
+.iv summary{cursor:pointer;font-weight:700;list-style:none;display:flex;gap:10px;align-items:flex-start}
+.iv summary::-webkit-details-marker{display:none}
+.iv summary .n{flex:none;width:26px;height:26px;border-radius:8px;background:var(--tape);color:var(--tape-ink);display:grid;place-items:center;font-size:13px;font-weight:800}
+.iv summary .q{flex:1}
+.iv summary::after{content:"+";color:var(--muted);font-weight:700;font-size:18px;line-height:1}
+.iv details[open] summary::after{content:"–"}
+.iv .body{margin:10px 0 2px 36px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.iv .lb{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.iv .ex{background:var(--surface);border-left:4px solid var(--good);border-radius:8px;padding:10px 12px;font-style:italic}
+.iv-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.iv-head p{margin:0;color:var(--muted);font-size:14px;flex:1;min-width:220px}
 /* ad modal */
 .modal{position:fixed;inset:0;background:rgba(8,14,24,.72);display:grid;place-items:center;padding:16px;z-index:20}
 .modal-box{width:100%;max-width:680px;background:var(--surface);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
@@ -1362,6 +1375,18 @@ function render(){
         <p>${esc(m.detalle)}</p></div></li>`).join("")}</ol>
     </div>
 
+    ${(r.entrevista||[]).length ? `<div class="card">
+      <div class="iv-head"><h3>Prepárate para la entrevista</h3><p>Preguntas que probablemente te harán para este puesto. Pulsa en cada una para ver el consejo y una respuesta de ejemplo con tu experiencia.</p></div>
+      <div class="iv">${r.entrevista.map((q,i) => `<details${i===0?" open":""}>
+        <summary><span class="n">${i+1}</span><span class="q">${esc(q.pregunta)}</span></summary>
+        <div class="body">
+          ${q.por_que ? `<div><div class="lb">Qué quieren saber</div>${esc(q.por_que)}</div>` : ""}
+          ${q.como_responder ? `<div><div class="lb">Cómo responder</div>${esc(q.como_responder)}</div>` : ""}
+          ${q.ejemplo ? `<div><div class="lb">Respuesta de ejemplo</div><div class="ex">"${esc(q.ejemplo)}"</div></div>` : ""}
+        </div></details>`).join("")}</div>
+      <p class="note" style="margin:0">Adapta las respuestas a tu forma de hablar: practícalas en voz alta, pero no las memorices palabra por palabra. Más consejos en la <a href="/guias/preguntas-entrevista.html">guía de preguntas de entrevista</a>.</p>
+    </div>` : ""}
+
     <div class="cv-area">
       <div class="paper-wrap" id="paperWrap">${cvHTML(r.cv)}</div>
       <aside class="side">
@@ -1666,6 +1691,14 @@ state.result = {
     "Tu experiencia en Google Ads pasa del final al primer logro",
     "Las prácticas de dependienta se resumen en una línea",
     "Habilidades agrupadas por categoría para pasar mejor los filtros ATS"
+  ],
+  entrevista: [
+    {pregunta:"Háblame un poco de ti.", por_que:"Quieren ver si sabes resumir tu perfil y conectarlo con el puesto.", como_responder:"En un minuto: quién eres, qué has hecho de relevante y por qué te interesa este puesto. Nada de repasar toda tu vida.", ejemplo:"Soy graduada en Marketing y llevo dos años en una agencia gestionando campañas de Google Ads y Meta Ads para pymes. Lo que más me gusta es analizar los datos y mejorar las campañas, y por eso me interesa dar el salto a un equipo de performance en retail online como el vuestro."},
+    {pregunta:"¿Por qué quieres trabajar en Nordika?", por_que:"Comprueban si te has informado sobre la empresa o si mandas CVs a todo.", como_responder:"Menciona algo concreto de la empresa (producto, valores, crecimiento) y relaciónalo con lo que tú aportas.", ejemplo:"He visto que estáis creciendo mucho en venta online y que invertís en campañas de pago. Me atrae trabajar en una marca de retail donde pueda especializarme en performance y ver el impacto directo en ventas."},
+    {pregunta:"¿Cómo optimizarías una campaña de Google Ads que no está dando resultados?", por_que:"Quieren comprobar que sabes hacer el trabajo, no solo que lo pones en el CV.", como_responder:"Explica tu proceso paso a paso y apóyate en un caso real tuyo.", ejemplo:"Primero miraría en Analytics dónde se pierde el usuario. Luego revisaría segmentación, pujas y anuncios. En la agencia lo hago cada semana: ajusto la puja y la segmentación según los datos y propongo cambios al cliente en el informe."},
+    {pregunta:"¿Qué herramientas de analítica utilizas?", por_que:"Validan tu nivel técnico con las herramientas que usan ellos.", como_responder:"Nombra las herramientas y para qué las usas, con un ejemplo concreto.", ejemplo:"Uso Google Analytics 4 a diario para analizar los resultados de las campañas, y Google Tag Manager para configurar eventos. También preparo los informes en Excel para los clientes."},
+    {pregunta:"Cuéntame una campaña de la que estés orgullosa.", por_que:"Buscan resultados concretos y cómo piensas.", como_responder:"Usa el método STAR: situación, tarea, qué hiciste y resultado. Si tienes cifras, dilas.", ejemplo:"Un cliente de retail tenía campañas en Meta Ads con poco retorno. Revisé las creatividades y la segmentación según los datos de Analytics y propuse cambios en el calendario de contenido. El cliente renovó con nosotros al trimestre siguiente."},
+    {pregunta:"La oferta pide experiencia en email marketing. ¿Qué experiencia tienes?", por_que:"Es un requisito que no aparece en tu CV y quieren ver cómo lo gestionas.", como_responder:"Sé honesta: reconoce que es tu punto a mejorar y demuestra que ya estás en ello o que aprendes rápido.", ejemplo:"No he gestionado email marketing de forma directa, pero conozco la lógica de segmentación y medición por mis campañas de pago. Estoy haciendo un curso de Klaviyo y en mis dos años en la agencia he aprendido herramientas nuevas muy rápido."}
   ],
   cv: {
     nombre: "Lucía Martín Ortega", titular: "Marketing Digital · Paid Media y Analítica",
