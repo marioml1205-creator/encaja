@@ -304,6 +304,13 @@ label.linkbtn{cursor:pointer}
 .savebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;font-size:14px}
 .savebar.ok{border-color:color-mix(in srgb,var(--good) 45%,transparent);color:var(--good);font-weight:600}
 .savebar span{flex:1;min-width:200px}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:46px}
+.pw-wrap input::-ms-reveal,.pw-wrap input::-ms-clear{display:none}
+.pw-eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--muted);cursor:pointer;padding:8px;border-radius:8px;display:grid;place-items:center}
+.pw-eye:hover{color:var(--ink)}
+.pw-eye .slash{display:none}
+.pw-eye[aria-pressed="true"] .slash{display:block}
 .cvcount{list-style:none;font-size:13px;color:var(--muted);padding:2px 2px 6px}
 .savebar input{flex:1 1 200px;max-width:320px;padding:8px 10px;font-weight:500;color:var(--ink)}
 .savebar.ok input{border-color:color-mix(in srgb,var(--good) 35%,var(--line))}
@@ -360,7 +367,7 @@ footer{color:var(--muted);font-size:12.5px;text-align:center}
     </div>
     <form id="authForm" novalidate>
       <div class="field"><label class="lbl" for="authEmail">Email</label><input type="email" id="authEmail" autocomplete="email" required></div>
-      <div class="field" id="passField"><label class="lbl" for="authPass">Contraseña</label><input type="password" id="authPass" autocomplete="new-password" minlength="8" required></div>
+      <div class="field" id="passField"><label class="lbl" for="authPass">Contraseña</label><div class="pw-wrap"><input type="password" id="authPass" autocomplete="new-password" minlength="8" required><button type="button" class="pw-eye" aria-label="Mostrar contraseña" title="Mostrar contraseña"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="slash" d="M3 3l18 18"/></svg></button></div></div>
       <div class="auth-msg" id="authMsg" role="alert"></div>
       <button class="btn btn-primary" type="submit" id="authSubmit">Crear cuenta</button>
       <button class="linkbtn" type="button" id="forgotBtn">He olvidado mi contraseña</button>
@@ -378,7 +385,7 @@ footer{color:var(--muted);font-size:12.5px;text-align:center}
   <div class="auth-box">
     <h1>Elige una contraseña nueva</h1>
     <form id="resetForm" novalidate>
-      <div class="field"><label class="lbl" for="newPass">Contraseña nueva</label><input type="password" id="newPass" autocomplete="new-password" minlength="8" required></div>
+      <div class="field"><label class="lbl" for="newPass">Contraseña nueva</label><div class="pw-wrap"><input type="password" id="newPass" autocomplete="new-password" minlength="8" required><button type="button" class="pw-eye" aria-label="Mostrar contraseña" title="Mostrar contraseña"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="slash" d="M3 3l18 18"/></svg></button></div></div>
       <div class="auth-msg" id="resetMsg" role="alert"></div>
       <button class="btn btn-primary" type="submit">Guardar contraseña</button>
     </form>
@@ -1126,6 +1133,15 @@ function setMode(m){
 }
 function openAuth(mode){ if (isAnon()) stashPending(); setMode(mode || "signup"); $("#authView").classList.remove("hidden"); setTimeout(() => $("#authEmail").focus(), 50); }
 function closeAuth(){ $("#authView").classList.add("hidden"); }
+document.querySelectorAll(".pw-eye").forEach(b => b.addEventListener("click", () => {
+  const inp = b.parentElement.querySelector("input");
+  const show = inp.type === "password";
+  inp.type = show ? "text" : "password";
+  b.setAttribute("aria-pressed", show);
+  b.setAttribute("aria-label", show ? "Ocultar contraseña" : "Mostrar contraseña");
+  b.title = b.getAttribute("aria-label");
+  inp.focus();
+}));
 $("#tabSignup").addEventListener("click", () => setMode("signup"));
 $("#tabLogin").addEventListener("click", () => setMode("login"));
 $("#authClose").addEventListener("click", closeAuth);
